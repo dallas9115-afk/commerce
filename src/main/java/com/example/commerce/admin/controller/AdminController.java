@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/admins")
 public class AdminController {
     private final AdminService adminService;
 
@@ -118,7 +120,7 @@ public class AdminController {
     //수정 필요
     //관리자 1명의 정보 상세조회
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @GetMapping("/admins/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<CommonResponseDTO<AdminDetailResponse>> getOne(
             @PathVariable long id, HttpSession session){
         SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
@@ -132,7 +134,7 @@ public class AdminController {
 
     // 그냥 내 정보 조회
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @GetMapping("/admins/me")
+    @GetMapping("/me")
     public ResponseEntity<CommonResponseDTO<GetMyInfoResponse>> getOne(HttpSession session){
         SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
         if (sessionAdmin == null){
@@ -145,7 +147,7 @@ public class AdminController {
 
     // 그냥 내 정보 수정
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @PutMapping("/admins/me")
+    @PutMapping("/me")
     public ResponseEntity<CommonResponseDTO<UpdateMyInfoResponse>> updateMe(
             @Valid @RequestBody UpdateMyInfoRequest request, HttpSession session){
         SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
