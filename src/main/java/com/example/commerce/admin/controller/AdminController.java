@@ -9,6 +9,8 @@ import com.example.commerce.global.common.CommonResponseHandler;
 import com.example.commerce.global.common.SuccessCode;
 import com.example.commerce.global.exception.ErrorCode;
 import com.example.commerce.global.exception.ServiceException;
+import com.example.commerce.global.security.AdminUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +35,10 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("/signup")
-    ResponseEntity<CommonResponseDTO<SignupResponse>> signup(@Valid @RequestBody SignupRequest request){
+    ResponseEntity<CommonResponseDTO<SignupResponse>> signup(
+            @Valid @RequestBody SignupRequest request
+
+    ){
         SignupResponse response = adminService.signup(request);
 
         return CommonResponseHandler.success(SuccessCode.ADMIN_SIGNUP, response);
@@ -40,16 +48,16 @@ public class AdminController {
     @PostMapping("/login")
     ResponseEntity<CommonResponseDTO<LoginResponse>> login(
             @Valid @RequestBody LoginRequest request,
-            HttpSession session
+            HttpServletRequest httpRequest
     ){
         //response 를 받아와서
-        LoginResponse response= adminService.login(request);
+        LoginResponse response= adminService.login(request, httpRequest);
 
         //controller 에서 sessionAdmin 조립, 등록
-        SessionAdmin sessionAdmin = new SessionAdmin(response);
+//        SessionAdmin sessionAdmin = new SessionAdmin(response);
 
-        session.setAttribute("loginAdmin", sessionAdmin);
-        session.setMaxInactiveInterval(120);// 자동 로그아웃 후 상태 변경 확인하기 위해 120초 설정
+//        session.setAttribute("loginAdmin", sessionAdmin);
+//        session.setMaxInactiveInterval(120);// 자동 로그아웃 후 상태 변경 확인하기 위해 120초 설정
 
         //받아온 response 를 Data 로 넣어서 반환
         return CommonResponseHandler.success(SuccessCode.LOGIN_SUCCESSFUL, response);
@@ -165,14 +173,19 @@ public class AdminController {
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<CommonResponseDTO<Void>> approveAdmin(
-            @PathVariable Long id, HttpSession session) {
+            @PathVariable Long id, @AuthenticationPrincipal AdminUserDetails userDetails) {
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//
+//        System.out.println(">>> current auth: " + auth);
+//        System.out.println(">>> authorities: " + auth.getAuthorities());
+//        System.out.println(">>> principal: " + auth.getPrincipal());
         //관리자 로그인 확인
-        SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
-        if (sessionAdmin == null){
-            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-        }
+//        SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
+//        if (sessionAdmin == null){
+//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
+//        }
 
-        adminService.approveAdmin(id, sessionAdmin.getId());
+        adminService.approveAdmin(id, userDetails.getAdmin().getId());
         return CommonResponseHandler.success(SuccessCode.STATUS_PATCHED);
     }
 

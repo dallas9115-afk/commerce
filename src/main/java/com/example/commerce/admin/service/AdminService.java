@@ -7,12 +7,22 @@ import com.example.commerce.admin.entity.Role;
 import com.example.commerce.admin.repository.AdminRepository;
 import com.example.commerce.global.config.PasswordEncoder;
 import com.example.commerce.global.exception.ErrorCode;
+import com.example.commerce.global.security.AdminUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import com.example.commerce.global.exception.ServiceException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.net.http.HttpRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -58,7 +68,7 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest) {
         // 이메일 자체가 존재하지 않는다면 404 오류 반환
         Admin admin = adminRepository.findByEmail(request.getEmail()).orElseThrow(
                 ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
@@ -88,6 +98,44 @@ public class AdminService {
 //        }
         isActiveAdmin(admin); // 관리자가 활성 상태인지 확인
         // 위와 같은 코드인데 이후 코드에서도 계속 사용할 것 같아서 method 로 분리했습니다!
+
+        AdminUserDetails userDetails = new AdminUserDetails(admin);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+        //SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        // 🔥 세션에 SecurityContext 저장 (핵심)
+        HttpSession session = httpRequest.getSession(true);
+        session.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+
+
+        //저장 잘 되는지 확인 코드 ------------------------
+        Authentication authenticationForChk = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authenticationForChk == null) {
+            System.out.println("Authentication is NULL");
+        } else {
+            System.out.println("Authentication: " + authenticationForChk);
+            System.out.println("Principal: " + authenticationForChk.getPrincipal());
+            System.out.println("Authorities: " + authenticationForChk.getAuthorities());
+            System.out.println("Authenticated: " + authenticationForChk.isAuthenticated());
+        }
+        // -----------------------------------------------
+
 
         return new LoginResponse(
                 admin.getId(),
