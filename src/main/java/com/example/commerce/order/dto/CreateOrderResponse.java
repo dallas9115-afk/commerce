@@ -17,7 +17,7 @@ public record CreateOrderResponse(
         int quantity,
         long totalPrice,
 
-        OrderStatus orderStatus,
+        String orderStatusName,
 
         LocalDateTime createdAt
 ) { }

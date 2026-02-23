@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 @Getter
 public class UpdateAdminOrderRequest {
 
+    //Long -> id, UUID -> orderNo
     private Long orderNo;
     private String statusName;
     private Long customersId;

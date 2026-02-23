@@ -18,12 +18,12 @@ public record CreateAdminOrderResponse(
         int productPrice,
         int quantity,
         long totalPrice,
-        OrderStatus orderStatus,
+        String orderStatusName,
         LocalDateTime createdAt,
 
         String adminName, //주문 등록 관리자명
         String adminEmail,
-        Role adminRole
+        String adminRole
 ) { }
 
 // 똑같은 타입일 경우 들어오는 데이터 순서가 달라져도 결과를 보기 전까지 모름

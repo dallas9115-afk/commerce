@@ -17,7 +17,7 @@ public enum OrderStatus {
         this.statusName = statusName;
     }
 
-}
+
     public static OrderStatus from(String orderStatus) {
         // 입력받은 주문 상태가 공백일 때
         if (orderStatus == null || orderStatus.isBlank()) {

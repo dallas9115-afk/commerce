@@ -1,8 +1,8 @@
 package com.example.commerce.order.dto;
 
-import org.hibernate.validator.constraints.UUID;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 public record GetOneOrderResponse(

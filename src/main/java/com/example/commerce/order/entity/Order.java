@@ -37,7 +37,7 @@ public class Order extends BaseEntity {
     //    주문 상태 (이넘사용)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private OrderStatus statusName;
+    private OrderStatus orderStatus;
 
 
     //    주문 수량 -> ordercount
@@ -48,7 +48,7 @@ public class Order extends BaseEntity {
 
 
     // 주문 취소 사유
-    @Column(nullable = false)
+    @Column
     private String cancelReason;
 
 
@@ -84,11 +84,16 @@ public class Order extends BaseEntity {
 
         // 준비 상태일 때만 취소 가능
         // statusName이 PREPARING과 같지 않을 경우 true
-        if (!this.statusName.equals(OrderStatus.PREPARING.toString()))  {
-            throw new ServiceException(ErrorCode.CANCEL_FORBIDDEN);
+//        if (!this.statusName.equals(OrderStatus.PREPARING.toString()))  {
+//            throw new ServiceException(ErrorCode.CANCEL_FORBIDDEN);
+//        }
+
+        if (orderStatus != OrderStatus.PREPARING){
+            throw new ServiceException(ErrorCode.INVALID_STATUS);
         }
+
         // 취소로 상태 변경
-        this.statusName = OrderStatus.CANCELED.name();
+        this.orderStatus = OrderStatus.CANCELED;
         // 취소 사유 저장
         this.cancelReason = reason;
     }

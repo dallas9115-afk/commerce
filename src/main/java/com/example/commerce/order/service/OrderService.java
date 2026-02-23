@@ -12,6 +12,8 @@ import com.example.commerce.order.entity.OrderStatus;
 import com.example.commerce.order.repository.OrderRepository;
 import com.example.commerce.product.entity.Product;
 import com.example.commerce.global.exception.ServiceException;
+import com.example.commerce.product.entity.ProductStatus;
+import com.example.commerce.product.repository.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,13 +28,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-
 public class OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
@@ -45,15 +40,15 @@ public class OrderService {
     public CreateOrderResponse create(long sessionCustomerId, @Valid CreateOrderRequest request) {
         // 세션에 저장되어있는 id 를 기반으로
         // customer repostiory 에서 customer 를 찾음 (없으면 오류 반환)
-        Customer customer = customerRepository.findCustomerById(sessionCustomerId)
+        Customer customer = customerRepository.findById(sessionCustomerId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.CUSTOMER_NOT_FOUND));
 
         // 상품이 정말로 존재하는지 (없으면 오류 반환)
-        Product product = productRepository.findProductById(request.getProductId())
+        Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 재고가 남아있는지 확인
-        if (request.getQuantity() > product.getQuantity()) {
+        if (request.getQuantity() > product.getStock()) {
             throw new ServiceException(ErrorCode.SHORT_STOCK);
         }
 
@@ -66,6 +61,7 @@ public class OrderService {
         );
 
         Order newOrder = orderRepository.save(order);
+        product.updateStock(product.getStock() - request.getQuantity());
 
         return new CreateOrderResponse(
                 newOrder.getId(),
@@ -89,15 +85,15 @@ public class OrderService {
         // 추가 필요
 
         // 요청한 고객이 존재하는지
-        Customer customer = customerRepository.findCustomerById(request.getCustomerId())
+        Customer customer = customerRepository.findById(request.getCustomerId())
                 .orElseThrow(() -> new ServiceException(ErrorCode.CUSTOMER_NOT_FOUND));
 
         // 상품이 정말로 존재하는지
-        Product product = productRepository.findProductById(request.getProductId())
+        Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 재고가 남아있는지 확인
-        if (request.getQuantity() > product.getQuantity()) {
+        if (request.getQuantity() > product.getStock()) {
             throw new ServiceException(ErrorCode.SHORT_STOCK);
         }
 
@@ -110,22 +106,27 @@ public class OrderService {
         );
 
         Order newOrder = orderRepository.save(order);
+        product.updateStock(product.getStock() - request.getQuantity());
 
         return new CreateAdminOrderResponse(
                 newOrder.getId(),
                 newOrder.getOrderNo(),
+
                 newOrder.getCustomer().getId(),
                 newOrder.getCustomer().getName(),
+
                 newOrder.getProduct().getName(),
                 newOrder.getProduct().getPrice(),
+
                 newOrder.getQuantity(),
                 newOrder.getTotalPrice(),
-                OrderStatus.PREPARING,
+
                 OrderStatus.PREPARING.getStatusName(),
                 newOrder.getCreatedAt(),
+
                 newOrder.getAdmin().getName(),
                 newOrder.getAdmin().getEmail(),
-                newOrder.getAdmin().getRole()
+                newOrder.getAdmin().getRole().getRoleName()
         );
     }
 
@@ -146,7 +147,7 @@ public class OrderService {
                     order.getCustomer().getName(),
                     order.getProduct().getName(),
                     order.getTotalPrice(),
-                    order.getStatusName(),
+                    order.getOrderStatus().getStatusName(),
                     order.getQuantity(),
                     order.getCreatedAt(),
                     order.getAdmin().getName()
@@ -157,53 +158,53 @@ public class OrderService {
     }
 
 
-    public Page<GetAllCustomerOrderResponse> getAllByCustomer(Pageable pageable){
+    public Page<GetAllCustomerOrderResponse> getAllByCustomer(String keyword, OrderStatus status, Pageable pageable){
         Page<Order> orders = orderRepository.findOrders(pageable);
 
         return orders.map(order -> new GetAllCustomerOrderResponse(
                 order.getOrderNo(),
                 order.getCustomer().getName(),
                 order.getProduct().getName(),
-                order.getStatusName()
+                order.getOrderStatus().getStatusName()
         ));
     }
 
 
     // 수정을 수정 중입니다:p
-    public UpdateAdminOrderResponse UAOR(UpdateAdminOrderRequest request){
-        Admin admin = adminRepository.findById(sessionAdminId).orElseThrow(
-                ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
-        );
-
-        Customer customer = customerRepository.findCustomerById(request.getCustomerId()); //orElseThrow
-
-        Product product = productRepository.findProductById(request.getProductId());
-
-        Order order = new Order(
-                request.getQuantity(),
-                calculateTotalPrice(request.getQuantity(), product.getPrice()),
-                product,
-                customer,
-                null
-        );
-
-        Order newOrder = orderRepository.save(order);
-
-        return new CreateOrderResponse(
-                newOrder.getId(),
-                newOrder.getOrderNo(),
-                newOrder.getProduct().getName(),
-                newOrder.getProduct().getPrice(),
-                newOrder.getQuantity(),
-                newOrder.getTotalPrice(),
-                OrderStatus.PREPARING,
-                newOrder.getCreatedAt()
-        );
-    }
-
-}
-        return (long) quantity * price;
-    }
+//    public UpdateAdminOrderResponse UAOR(UpdateAdminOrderRequest request){
+//        Admin admin = adminRepository.findById(sessionAdminId).orElseThrow(
+//                ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
+//        );
+//
+//        Customer customer = customerRepository.findCustomerById(request.getCustomerId()); //orElseThrow
+//
+//        Product product = productRepository.findProductById(request.getProductId());
+//
+//        Order order = new Order(
+//                request.getQuantity(),
+//                calculateTotalPrice(request.getQuantity(), product.getPrice()),
+//                product,
+//                customer,
+//                null
+//        );
+//
+//        Order newOrder = orderRepository.save(order);
+//
+//        return new CreateOrderResponse(
+//                newOrder.getId(),
+//                newOrder.getOrderNo(),
+//                newOrder.getProduct().getName(),
+//                newOrder.getProduct().getPrice(),
+//                newOrder.getQuantity(),
+//                newOrder.getTotalPrice(),
+//                OrderStatus.PREPARING,
+//                newOrder.getCreatedAt()
+//        );
+//    }
+//
+//
+//        return (long) quantity * price;
+//    }
 
     // 주문 단 건 조회 (관리자용)
     public GetOneAdminOrderResponse getOneAdminOrder(Long orderId, Long sessionAdminId) {
@@ -282,7 +283,28 @@ public class OrderService {
 
     // 주문 취소 (관리자)
     @Transactional
-    public  void cancelOrder(Long orderId, Long customerId, )
+    public CancelOrderResponse cancelByAdmin(Long orderId, Long sessionAdminId, CancelOrderRequest request) {
 
+        // 관리자 활성 상태 확인
+        isActiveAdmin(getAdminById(sessionAdminId));
 
+        // 주문 확인
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ServiceException(ErrorCode.ORDERING_NOT_FOUND));
+
+        // 재고 다시 수량 올리기
+        Product product = order.getProduct();
+        product.updateStock(product.getStock()+order.getQuantity()); // restoreStock 변경 필요
+
+        // 상태 변경 + 취소 사유 저장
+        order.cancel(request.getCancelReason());
+
+        return new CancelOrderResponse(
+                order.getId(),
+                order.getOrderNo(),
+                order.getOrderStatus().getStatusName(),
+                order.getCancelReason()
+        );
+
+    }
 }

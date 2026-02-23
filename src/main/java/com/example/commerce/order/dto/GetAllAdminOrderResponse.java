@@ -12,6 +12,7 @@ public record GetAllAdminOrderResponse(
         String productName,
         long totalPrice,
         String orderStatus,
+        int orderQuantity,
 
         LocalDateTime createdAt,
 

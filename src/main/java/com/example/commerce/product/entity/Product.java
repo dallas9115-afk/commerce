@@ -61,17 +61,15 @@ public class Product extends BaseEntity {
     }
 
     // 재고처리
-    public void updateStock(int orderQuantity){
-        // 여기서 들어오는 stock : 재고가 3개고 5개 주문
-        // -2 로 들어오는건가요? 3 - 5?
-        // 5 로 들어오는 느낌인가? 주문들어온 양 만큼 들어오는지
-        // quantity 로 하겠습니다
-        // request : 6개 주문 stock == 6 으로 들어오도록
-        if(stockIsValid(this.stock - orderQuantity)){
-            this.stock -= orderQuantity;
+    public void updateStock(int stock){
+        // 계산된 값이 들어오도록 함
+        if(stockIsValid(stock)){
+            this.stock = stock;
         }
 
-        if (this.stock == 0) updateStatus(ProductStatus.SOLD_OUT);
+        if (this.stock == 0 && status!=ProductStatus.DISCONTINUED) {
+            updateStatus(ProductStatus.SOLD_OUT);
+        }
 
 //        this.stock = stock;
 //        updateStatus();
