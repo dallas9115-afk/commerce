@@ -176,7 +176,6 @@ public class AdminService {
 
         // 1. Repository의 동적 쿼리를 호출하여 엔티티 페이징 객체를 가져옴
         Page<Admin> admins = adminRepository.searchAdmins(keyword, role, status, pageable);
-        Page<AdminDetailResponse> dtos;
 
         // 2. Page<Admin>을 Page<AdminDetailResponse>로 변환 (DTO 변환)
         //return admins.map(AdminDetailResponse::from);
