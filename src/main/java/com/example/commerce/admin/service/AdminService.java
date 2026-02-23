@@ -357,12 +357,14 @@ public class AdminService {
         isActiveAdmin(getAdminById(sessionAdminId));
         Admin admin = getAdminById(targetId);
 
-        try {
-            AdminStatus newStatus = AdminStatus.valueOf(statusString.toUpperCase());
-            admin.updateStatus(newStatus);
-        } catch (IllegalArgumentException e) {
-            throw new ServiceException(ErrorCode.INVALID_STATUS); // 상태값 파싱 실패 시 에러
-        }
+        AdminStatus newStatus = AdminStatus.from(statusString);
+        admin.updateStatus(newStatus);
+//        try {
+//            AdminStatus newStatus = AdminStatus.valueOf(statusString.toUpperCase());
+//            admin.updateStatus(newStatus);
+//        } catch (IllegalArgumentException e) {
+//            throw new ServiceException(ErrorCode.INVALID_STATUS); // 상태값 파싱 실패 시 에러
+//        }
     }
 
     @Transactional

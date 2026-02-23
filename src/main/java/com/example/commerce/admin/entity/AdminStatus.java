@@ -1,5 +1,7 @@
 package com.example.commerce.admin.entity;
 
+import com.example.commerce.global.exception.ErrorCode;
+import com.example.commerce.global.exception.ServiceException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -15,4 +17,21 @@ public enum AdminStatus {
 
     private final String statusName;
     private final boolean loginable; // [로그인 처리] 반영
+
+    public static AdminStatus from(String status) {
+        // 입력받은 직책이 공백
+        if (status == null || status.isBlank()) {
+            throw new ServiceException(ErrorCode.INVALID_ROLE);
+            // 잘못 입력했다고 생각하고 잘못된 입력값 return
+        }
+
+        // 직책 찾기
+        for (AdminStatus a : AdminStatus.values()) {
+            if (a.statusName.equalsIgnoreCase(status)) {
+                return a;
+            }
+        }
+
+        throw new ServiceException(ErrorCode.INVALID_ROLE);
+    }
 }

@@ -27,7 +27,7 @@ public enum Role {
 
         // 직책 찾기
         for (Role r : Role.values()) {
-            if (r.name().equalsIgnoreCase(role)) {
+            if (r.roleName.equalsIgnoreCase(role)) {
                 return r;
             }
         }
