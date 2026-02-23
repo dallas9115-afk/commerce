@@ -52,7 +52,6 @@ public enum ErrorCode {
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "C003", "유효하지 않은 카테고리입니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "서버 내부 오류가 발생했습니다.");
 
-
     // 상태코드, 내가 지정한 오류코드, 출력할 메시지
     private final HttpStatus status;
     private final String code;
