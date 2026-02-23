@@ -114,7 +114,7 @@ public class AdminService {
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
 
-        // 🔥 세션에 SecurityContext 저장 (핵심)
+        // 세션에 SecurityContext 저장
         HttpSession session = httpRequest.getSession(true);
         session.setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
@@ -142,8 +142,8 @@ public class AdminService {
                 admin.getName(),
                 admin.getEmail(),
                 admin.getPhone(),
-                admin.getRole(),
-                admin.getStatus(),
+                admin.getRole().getRoleName(),
+                admin.getStatus().getStatusName(),
                 admin.getCreatedAt()
         );
     }
@@ -176,9 +176,20 @@ public class AdminService {
 
         // 1. Repository의 동적 쿼리를 호출하여 엔티티 페이징 객체를 가져옴
         Page<Admin> admins = adminRepository.searchAdmins(keyword, role, status, pageable);
+        Page<AdminDetailResponse> dtos;
 
         // 2. Page<Admin>을 Page<AdminDetailResponse>로 변환 (DTO 변환)
-        return admins.map(AdminDetailResponse::from);
+        //return admins.map(AdminDetailResponse::from);
+        return admins.map(admin -> new AdminDetailResponse(
+                admin.getId(),
+                admin.getName(),
+                admin.getEmail(),
+                admin.getPhone(),
+                admin.getRole().getRoleName(),
+                admin.getStatus().getStatusName(),
+                admin.getCreatedAt(),
+                admin.getApprovedAt()
+        ));
     }
 
     // 개별 관리자의 상세정보 조회
@@ -189,7 +200,17 @@ public class AdminService {
         // 찾으려는 관리자가 존재하는지 확인
         Admin admin = getAdminById(adminId);
 
-        return AdminDetailResponse.from(admin);
+        //return AdminDetailResponse.from(admin);
+        return new AdminDetailResponse(
+                admin.getId(),
+                admin.getName(),
+                admin.getEmail(),
+                admin.getPhone(),
+                admin.getRole().getRoleName(),
+                admin.getStatus().getStatusName(),
+                admin.getCreatedAt(),
+                admin.getApprovedAt()
+        );
     }
     // 관리자 정보/내 프로필 수정
     @Transactional
@@ -240,7 +261,7 @@ public class AdminService {
 
         return new RejectResponse(
                 admin.getId(),
-                admin.getRole(),
+                admin.getRole().getRoleName(),
                 admin.getRejectReason(),
                 admin.getRejectedAt()
         );

@@ -12,7 +12,8 @@ public class RejectResponse {
     // 승인이 허가되지 않은 관리자의
     // id, 직책, 이유, 시간
     private final long rejectedAdminId;
-    private final Role role;
+    //private final Role role;
+    private final String role;
     private final String rejectReason;
     private final LocalDateTime rejectedAt;
 }
