@@ -13,6 +13,6 @@ public enum AdminStatus {
     STOPPED("정지", false),
     REJECTED("거부", false);
 
-    private final String title;
+    private final String statusName;
     private final boolean loginable; // [로그인 처리] 반영
 }

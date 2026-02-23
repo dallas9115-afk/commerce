@@ -14,7 +14,7 @@ public enum Role {
     // Spring Security 사용을 위해 접두사(ROLE) 추가
 
     private final String id;
-    private final String name;
+    private final String roleName;
     private final int level;
 
     // 역할 String 을 Enum 타입으로 변환
