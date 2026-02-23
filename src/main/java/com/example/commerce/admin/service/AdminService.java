@@ -7,12 +7,22 @@ import com.example.commerce.admin.entity.Role;
 import com.example.commerce.admin.repository.AdminRepository;
 import com.example.commerce.global.config.PasswordEncoder;
 import com.example.commerce.global.exception.ErrorCode;
+import com.example.commerce.global.security.AdminUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import com.example.commerce.global.exception.ServiceException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.net.http.HttpRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -52,13 +62,13 @@ public class AdminService {
                 savedAdmin.getName(),
                 savedAdmin.getEmail(),
                 savedAdmin.getPhone(),
-                savedAdmin.getRole(),
-                savedAdmin.getStatus()
+                savedAdmin.getRole().getRoleName(),
+                savedAdmin.getStatus().getStatusName()
         );
     }
 
     @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest) {
         // 이메일 자체가 존재하지 않는다면 404 오류 반환
         Admin admin = adminRepository.findByEmail(request.getEmail()).orElseThrow(
                 ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
@@ -89,13 +99,51 @@ public class AdminService {
         isActiveAdmin(admin); // 관리자가 활성 상태인지 확인
         // 위와 같은 코드인데 이후 코드에서도 계속 사용할 것 같아서 method 로 분리했습니다!
 
+        AdminUserDetails userDetails = new AdminUserDetails(admin);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+        //SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        // 세션에 SecurityContext 저장
+        HttpSession session = httpRequest.getSession(true);
+        session.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+
+
+//        //저장 잘 되는지 확인 코드 ------------------------
+//        Authentication authenticationForChk = SecurityContextHolder.getContext().getAuthentication();
+//
+//        if (authenticationForChk == null) {
+//            System.out.println("Authentication is NULL");
+//        } else {
+//            System.out.println("Authentication: " + authenticationForChk);
+//            System.out.println("Principal: " + authenticationForChk.getPrincipal());
+//            System.out.println("Authorities: " + authenticationForChk.getAuthorities());
+//            System.out.println("Authenticated: " + authenticationForChk.isAuthenticated());
+//        }
+//        // -----------------------------------------------
+
+
         return new LoginResponse(
                 admin.getId(),
                 admin.getName(),
                 admin.getEmail(),
                 admin.getPhone(),
-                admin.getRole(),
-                admin.getStatus(),
+                admin.getRole().getRoleName(),
+                admin.getStatus().getStatusName(),
                 admin.getCreatedAt()
         );
     }
@@ -130,7 +178,17 @@ public class AdminService {
         Page<Admin> admins = adminRepository.searchAdmins(keyword, role, status, pageable);
 
         // 2. Page<Admin>을 Page<AdminDetailResponse>로 변환 (DTO 변환)
-        return admins.map(AdminDetailResponse::from);
+        //return admins.map(AdminDetailResponse::from);
+        return admins.map(admin -> new AdminDetailResponse(
+                admin.getId(),
+                admin.getName(),
+                admin.getEmail(),
+                admin.getPhone(),
+                admin.getRole().getRoleName(),
+                admin.getStatus().getStatusName(),
+                admin.getCreatedAt(),
+                admin.getApprovedAt()
+        ));
     }
 
     // 개별 관리자의 상세정보 조회
@@ -141,7 +199,17 @@ public class AdminService {
         // 찾으려는 관리자가 존재하는지 확인
         Admin admin = getAdminById(adminId);
 
-        return AdminDetailResponse.from(admin);
+        //return AdminDetailResponse.from(admin);
+        return new AdminDetailResponse(
+                admin.getId(),
+                admin.getName(),
+                admin.getEmail(),
+                admin.getPhone(),
+                admin.getRole().getRoleName(),
+                admin.getStatus().getStatusName(),
+                admin.getCreatedAt(),
+                admin.getApprovedAt()
+        );
     }
     // 관리자 정보/내 프로필 수정
     @Transactional
@@ -192,7 +260,7 @@ public class AdminService {
 
         return new RejectResponse(
                 admin.getId(),
-                admin.getRole(),
+                admin.getRole().getRoleName(),
                 admin.getRejectReason(),
                 admin.getRejectedAt()
         );
@@ -289,12 +357,14 @@ public class AdminService {
         isActiveAdmin(getAdminById(sessionAdminId));
         Admin admin = getAdminById(targetId);
 
-        try {
-            AdminStatus newStatus = AdminStatus.valueOf(statusString.toUpperCase());
-            admin.updateStatus(newStatus);
-        } catch (IllegalArgumentException e) {
-            throw new ServiceException(ErrorCode.INVALID_STATUS); // 상태값 파싱 실패 시 에러
-        }
+        AdminStatus newStatus = AdminStatus.from(statusString);
+        admin.updateStatus(newStatus);
+//        try {
+//            AdminStatus newStatus = AdminStatus.valueOf(statusString.toUpperCase());
+//            admin.updateStatus(newStatus);
+//        } catch (IllegalArgumentException e) {
+//            throw new ServiceException(ErrorCode.INVALID_STATUS); // 상태값 파싱 실패 시 에러
+//        }
     }
 
     @Transactional
