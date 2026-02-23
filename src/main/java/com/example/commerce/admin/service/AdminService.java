@@ -7,22 +7,13 @@ import com.example.commerce.admin.entity.Role;
 import com.example.commerce.admin.repository.AdminRepository;
 import com.example.commerce.global.config.PasswordEncoder;
 import com.example.commerce.global.exception.ErrorCode;
-import com.example.commerce.global.security.AdminUserDetails;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
 import com.example.commerce.global.exception.ServiceException;
+import com.example.commerce.global.security.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.net.http.HttpRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -67,77 +58,28 @@ public class AdminService {
         );
     }
 
+    private final JwtUtil jwtUtil; // 상단에 DI(의존성 주입) 추가해주세요!
+
     @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest request, HttpServletRequest httpRequest) {
-        // 이메일 자체가 존재하지 않는다면 404 오류 반환
+    public LoginResponse login(LoginRequest request) { // HttpServletRequest 파라미터 삭제
         Admin admin = adminRepository.findByEmail(request.getEmail()).orElseThrow(
                 ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
         );
 
-        // 위에서 튕기지 않았다면 email 은 존재하는게 되니까
-        // 해당 email 을 기반으로 찾은 admin 에 등록된 pw 와
-        // request 에서 입력받은 pw 가 동일한지 확인
-        // 틀렸다면 401 (unauthorized) 오류 반환
         if(!passwordEncoder.matches(request.getPassword(), admin.getPassword())){
             throw new ServiceException(ErrorCode.WRONG_PW);
         }
 
-//
-//        if(!admin.getStatus().isLoginable()){
-//            throw new ServiceException(ErrorCode.FORBIDDEN_ADMIN);
-//        }
+        isActiveAdmin(admin);
 
-//        if(!admin.getStatus().isLoginable()){
-//            switch (admin.getStatus()) {
-//                case PENDING -> throw new ServiceException(ErrorCode.ADMIN_PENDING);   // "계정 승인대기 중"
-//                case REJECTED -> throw new ServiceException(ErrorCode.ADMIN_REJECTED); // "계정 신청 거부됨"
-//                case STOPPED -> throw new ServiceException(ErrorCode.ADMIN_STOPPED);   // "계정 정지됨"
-//                case INACTIVE -> throw new ServiceException(ErrorCode.ADMIN_INACTIVE); // "계정 비활성화됨"
-//                default -> throw new ServiceException(ErrorCode.FORBIDDEN_ADMIN);
-//            }
-//        }
-        isActiveAdmin(admin); // 관리자가 활성 상태인지 확인
-        // 위와 같은 코드인데 이후 코드에서도 계속 사용할 것 같아서 method 로 분리했습니다!
+        // 과거의 세션 생성 코드(SecurityContextHolder.setContext... session.setAttribute...) 전부 삭제! ★
 
-        AdminUserDetails userDetails = new AdminUserDetails(admin);
+        // 1. JWT 토큰 생성
+        String token = jwtUtil.createToken(admin.getId(), admin.getEmail(), admin.getRole().name());
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-
-        //SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-
-        // 세션에 SecurityContext 저장
-        HttpSession session = httpRequest.getSession(true);
-        session.setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-                context
-        );
-
-
-
-//        //저장 잘 되는지 확인 코드 ------------------------
-//        Authentication authenticationForChk = SecurityContextHolder.getContext().getAuthentication();
-//
-//        if (authenticationForChk == null) {
-//            System.out.println("Authentication is NULL");
-//        } else {
-//            System.out.println("Authentication: " + authenticationForChk);
-//            System.out.println("Principal: " + authenticationForChk.getPrincipal());
-//            System.out.println("Authorities: " + authenticationForChk.getAuthorities());
-//            System.out.println("Authenticated: " + authenticationForChk.isAuthenticated());
-//        }
-//        // -----------------------------------------------
-
-
+        // 2. Response 에 토큰 담아서 반환
         return new LoginResponse(
+                token, // 생성된 토큰
                 admin.getId(),
                 admin.getName(),
                 admin.getEmail(),
@@ -215,14 +157,7 @@ public class AdminService {
     @Transactional
     public UpdateAdminResponse updateAdminInfo(Long adminId, UpdateAdminRequest request, Long sessionAdminId) {
         isActiveAdmin(getAdminById(sessionAdminId));
-//
-//        Admin loginAdmin = adminRepository.findById(sessionAdminId).orElseThrow(
-//                ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
-//        );
-//
-//        isActiveAdmin(loginAdmin);
-
-        Admin admin = adminRepository.findById(adminId)
+Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.ADMIN_NOT_FOUND));
 
         // 보안 체크: 만약 이메일을 변경하려고 하는데, 그 이메일이 이미 다른 사람의 것이라면 막음
@@ -247,8 +182,6 @@ public class AdminService {
 
         // 승인 또는 거부하려는 대상 관리자가 존재하는지 확인
         Admin admin = getAdminById(adminId);
-//        Admin admin = adminRepository.findById(adminId)
-//                .orElseThrow(() -> new ServiceException(ErrorCode.ADMIN_NOT_FOUND));
 
         // 승인 또는 거부하려는 대상 관리자가 승인 대기 상태인지 확인
         if (admin.getStatus() != AdminStatus.PENDING) {
@@ -263,62 +196,6 @@ public class AdminService {
                 admin.getRole().getRoleName(),
                 admin.getRejectReason(),
                 admin.getRejectedAt()
-        );
-    }
-
-//    public GetAdminResponse getOne(long adminId) {
-//        Admin admin = adminRepository.findById(adminId).orElseThrow(
-//                ()-> new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
-//        );
-//
-//        return new GetAdminResponse(
-//                admin.getName(),
-//                admin.getEmail(),
-//                admin.getPhone(),
-//                admin.getRole().getName(),
-//                admin.getStatus().getTitle(),
-//                admin.getCreatedAt(),
-//                admin.getApprovedAt()
-//        );
-//    }
-
-    public GetMyInfoResponse getMyInfo(Long sessionAdminId) {
-        //로그인 session 에 있는 id 가 DB 에도 존재하고 있는지 재확인
-        Admin admin = getAdminById(sessionAdminId);
-//        Admin admin = adminRepository.findById(sessionAdminId).orElseThrow(
-//                ()->new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
-//        );
-
-        return new GetMyInfoResponse(
-                admin.getName(),
-                admin.getEmail(),
-                admin.getPhone()
-        );
-    }
-
-    public UpdateMyInfoResponse updateMyInfo(Long sessionAdminId, UpdateMyInfoRequest request) {
-        //로그인 session 에 있는 id 가 DB 에도 존재하고 있는지 재확인
-        Admin admin = getAdminById(sessionAdminId);
-//        Admin admin = adminRepository.findById(sessionAdminId).orElseThrow(
-//                ()->new ServiceException(ErrorCode.ADMIN_NOT_FOUND)
-//        );
-
-        isActiveAdmin(admin); // 수정은 활성상태의 관리자만 가능
-
-        // request 로 들어온 수정 목표 email 이 이미 존재하는지 확인,
-        // 입력 메일이 자신의 기존 가입 이메일과 같으면 통과, 아니라면 존재하는 다른 이메일과 중복되는지 검사
-        // 존재한다면 DUPLICATE_EMAIL 409 conflict 에러 발생시킴
-        if (!admin.getEmail().equals(request.getEmail()) && adminRepository.existsByEmail(request.getEmail())) {
-            throw new ServiceException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
-        //Update, 위에서 repository 에 갔다왔으므로 자동 update 가 가능
-        admin.update(request.getName(), request.getEmail(), request.getPhone());
-
-        return new UpdateMyInfoResponse(
-                admin.getName(),
-                admin.getEmail(),
-                admin.getPhone()
         );
     }
 
@@ -359,12 +236,6 @@ public class AdminService {
 
         AdminStatus newStatus = AdminStatus.from(statusString);
         admin.updateStatus(newStatus);
-//        try {
-//            AdminStatus newStatus = AdminStatus.valueOf(statusString.toUpperCase());
-//            admin.updateStatus(newStatus);
-//        } catch (IllegalArgumentException e) {
-//            throw new ServiceException(ErrorCode.INVALID_STATUS); // 상태값 파싱 실패 시 에러
-//        }
     }
 
     @Transactional

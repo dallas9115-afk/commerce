@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 
 public record LoginResponse(
+        String token, // 프론트엔드에 전달하는 JWT 토큰
         Long adminId,
         String adminName,
         String adminEmail,
@@ -16,18 +17,3 @@ public record LoginResponse(
         String adminStatus,
         LocalDateTime adminCreatedAt
 ){}
-
-//@RequiredArgsConstructor
-//@Getter
-//public class LoginResponse {
-//    private final Long adminId;
-//    private final String adminName;
-//    private final String adminEmail;
-//    private final String adminPhone;
-//    //    private final Role adminRole;
-////    private final AdminStatus adminStatus;
-//    private final String adminRole;
-//    private final String adminStatus;
-//    private final LocalDateTime adminCreatedAt;
-//}
-

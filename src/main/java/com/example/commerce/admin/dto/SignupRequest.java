@@ -21,7 +21,7 @@ public class SignupRequest {
     @Size(min=8, max = 20)
     private String password;
 
-    @Pattern(regexp = "^01[0-9]-\\d{3,4}-\\d{4}$")
+    @Pattern(regexp = "^01[0-9]-\\d{3,4}-\\d{4}$", message = "전화번호 형식은 010-XXXX-XXXX 입니다.")
     private String phone;
 
     @NotBlank(message = "직책은 필수입니다.")

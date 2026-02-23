@@ -48,22 +48,15 @@ public class AdminController {
     }
 
     @PostMapping("/login")
-    ResponseEntity<CommonResponseDTO<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest
+    public ResponseEntity<CommonResponseDTO<LoginResponse>> login(
+            @Valid @RequestBody LoginRequest request
     ){
-        //response 를 받아와서
-        LoginResponse response= adminService.login(request, httpRequest);
+        // 1. HttpServletRequest 파라미터 삭제
+        // 2. 서비스 호출 시에도 request(DTO)만 넘김
+        LoginResponse response = adminService.login(request);
 
-        //controller 에서 sessionAdmin 조립, 등록
-//        SessionAdmin sessionAdmin = new SessionAdmin(response);
-
-//        session.setAttribute("loginAdmin", sessionAdmin);
-//        session.setMaxInactiveInterval(120);// 자동 로그아웃 후 상태 변경 확인하기 위해 120초 설정
-
-        //받아온 response 를 Data 로 넣어서 반환
+        // JWT 토큰이 포함된 response 를 Data 로 넣어서 반환
         return CommonResponseHandler.success(SuccessCode.LOGIN_SUCCESSFUL, response);
-        //return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     // 관리자 리스트 조회 (슈퍼 관리자 전용)
@@ -142,30 +135,24 @@ public class AdminController {
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
     }
 
-    // 그냥 내 정보 조회
+    // 그냥 내 정보 조회 (중복 제거 및 AdminDetailResponse 로 통합) -> getMyInfo 삭제
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
     @GetMapping("/me")
-    public ResponseEntity<CommonResponseDTO<GetMyInfoResponse>> getOne(@AuthenticationPrincipal AdminUserDetails userDetails){
-//        SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
-//        if (sessionAdmin == null){
-//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-//        }
-
-        GetMyInfoResponse response = adminService.getMyInfo(userDetails.getAdmin().getId());
+    public ResponseEntity<CommonResponseDTO<AdminDetailResponse>> getMe(@AuthenticationPrincipal AdminUserDetails userDetails){
+        Long myId = userDetails.getAdmin().getId();
+        // 타인 조회 로직에 내 ID를 넣어서 리팩터링
+        AdminDetailResponse response = adminService.getAdminDetail(myId, myId);
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
     }
 
-    // 그냥 내 정보 수정
+    // 그냥 내 정보 수정 (중복 제거 및 UpdateAdminRequest 로 통합) -> updateMyInfo 삭제
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
     @PutMapping("/me")
-    public ResponseEntity<CommonResponseDTO<UpdateMyInfoResponse>> updateMe(
-            @Valid @RequestBody UpdateMyInfoRequest request, @AuthenticationPrincipal AdminUserDetails userDetails){
-//        SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
-//        if (sessionAdmin == null){
-//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-//        }
-
-        UpdateMyInfoResponse response = adminService.updateMyInfo(userDetails.getAdmin().getId(), request);
+    public ResponseEntity<CommonResponseDTO<UpdateAdminResponse>> updateMe(
+            @Valid @RequestBody UpdateAdminRequest request, @AuthenticationPrincipal AdminUserDetails userDetails){
+        Long myId = userDetails.getAdmin().getId();
+        // 타인 수정 로직에 내 ID를 넣어서 리팩터링
+        UpdateAdminResponse response = adminService.updateAdminInfo(myId, request, myId);
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, response);
     }
 
