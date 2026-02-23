@@ -3,6 +3,13 @@ package com.example.commerce.order.entity;
 import com.example.commerce.admin.entity.Admin;
 import com.example.commerce.customer.entity.Customer;
 import com.example.commerce.global.common.BaseEntity;
+import com.example.commerce.product.entity.Product;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import com.example.commerce.global.exception.ErrorCode;
 import com.example.commerce.global.exception.ServiceException;
 import com.example.commerce.product.entity.Product;
@@ -27,19 +34,24 @@ public class Order extends BaseEntity {
     private UUID orderNo = UUID.randomUUID();
 
 
-    // 주문 상태 (이넘사용)
+    //    주문 상태 (이넘사용)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private String statusName;
+    private OrderStatus statusName;
+
+
+    //    주문 수량 -> ordercount
+    @Column(nullable = false)
+    private int quantity;
+
+
+
 
     // 주문 취소 사유
     @Column(nullable = false)
     private String cancelReason;
 
 
-    // 주문 수량
-    @Column(nullable = false)
-    private int quantity;
 
     // 주문 총 금액
     private long totalPrice;
