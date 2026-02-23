@@ -60,11 +60,6 @@ public class Product extends BaseEntity {
         return true;
     }
 
-//    // 카테고리 변경
-//    public void updateCategory(Category category) {
-//        this.category = category;
-//    }
-
     // 재고처리
     public void updateStock(int orderQuantity){
         // 여기서 들어오는 stock : 재고가 3개고 5개 주문
