@@ -30,7 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/admins/signup", "/admins/login").permitAll()
                         .anyRequest().authenticated()
                 )
-                // ★ 기본 로그인 필터 앞에 내가 만든 JwtFilter를 끼워 넣음 ★
+                // 기본 로그인 필터 앞에 JwtFilter를 끼워넣음
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
