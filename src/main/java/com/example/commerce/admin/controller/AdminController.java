@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admins")
@@ -68,7 +70,7 @@ public class AdminController {
     // Spring Security가 세션/토큰을 확인하여 ROLE_SUPER_ADMIN이 아니면 403을 반환.
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @GetMapping("/admins") //endpoint 수정 (by 권지원, at 02/21 12:35)
-    public ResponseEntity<CommonResponseDTO<Page<AdminDetailResponse>>> getAdminList(
+    public ResponseEntity<CommonResponseDTO<List<AdminDetailResponse>>> getAdminList(
             /*
             * RequestParam : URL 주소 뒤에 ? 를 붙이고, key=value 형태로 데이터 보내는 쿼리 스트림을
               Java의 변수로 자동 적용해주는 어노테이션
@@ -120,7 +122,7 @@ public class AdminController {
 
         // 200 OK 상태 코드와 함께 데이터 반환
         //return ResponseEntity.ok(response);
-        return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
+        return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());
 
         // 기본 조회 외의 내용이 있으면 추가
     }
@@ -205,7 +207,7 @@ public class AdminController {
 
     // 관리자 정보 수정 (본인이거나 슈퍼 관리자일 경우)
     // #id는 URL의 {id}를 의미하며, principal.id는 로그인한 사용자의 ID를 의미합니다.
-    @PreAuthorize("#id == authentication.principal.id or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("#id == principal.admin.id or hasRole('SUPER_ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CommonResponseDTO<UpdateAdminResponse>> updateAdminInfo(
             @PathVariable Long id, @RequestBody UpdateAdminRequest request,

@@ -123,18 +123,18 @@ public class AdminService {
 
 
 
-        //저장 잘 되는지 확인 코드 ------------------------
-        Authentication authenticationForChk = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authenticationForChk == null) {
-            System.out.println("Authentication is NULL");
-        } else {
-            System.out.println("Authentication: " + authenticationForChk);
-            System.out.println("Principal: " + authenticationForChk.getPrincipal());
-            System.out.println("Authorities: " + authenticationForChk.getAuthorities());
-            System.out.println("Authenticated: " + authenticationForChk.isAuthenticated());
-        }
-        // -----------------------------------------------
+//        //저장 잘 되는지 확인 코드 ------------------------
+//        Authentication authenticationForChk = SecurityContextHolder.getContext().getAuthentication();
+//
+//        if (authenticationForChk == null) {
+//            System.out.println("Authentication is NULL");
+//        } else {
+//            System.out.println("Authentication: " + authenticationForChk);
+//            System.out.println("Principal: " + authenticationForChk.getPrincipal());
+//            System.out.println("Authorities: " + authenticationForChk.getAuthorities());
+//            System.out.println("Authenticated: " + authenticationForChk.isAuthenticated());
+//        }
+//        // -----------------------------------------------
 
 
         return new LoginResponse(
