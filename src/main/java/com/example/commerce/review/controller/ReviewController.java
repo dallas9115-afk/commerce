@@ -4,7 +4,6 @@ import com.example.commerce.global.common.CommonResponseDTO;
 import com.example.commerce.global.common.CommonResponseHandler;
 import com.example.commerce.global.common.SuccessCode;
 import com.example.commerce.global.security.UserPrincipal;
-import com.example.commerce.order.dto.GetOrdersResponse;
 import com.example.commerce.review.dto.CreateReviewRequest;
 import com.example.commerce.review.dto.CreateReviewResponse;
 import com.example.commerce.review.dto.GetOneReviewResponse;
@@ -77,6 +76,7 @@ public class ReviewController {
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());
     }
 
+    // 4. 리뷰 삭제
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
     @DeleteMapping("/{reviewId}")
     ResponseEntity<CommonResponseDTO<Void>> delete(
@@ -87,10 +87,5 @@ public class ReviewController {
 
         return CommonResponseHandler.success(SuccessCode.DELETE_SUCCESSFUL);
     }
-
-
-
-
-    // 4. 리뷰 삭제
 
 }

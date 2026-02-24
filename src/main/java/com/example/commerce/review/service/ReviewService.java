@@ -11,8 +11,6 @@ import com.example.commerce.global.security.UserPrincipal;
 import com.example.commerce.order.entity.Order;
 import com.example.commerce.order.entity.OrderStatus;
 import com.example.commerce.order.repository.OrderRepository;
-import com.example.commerce.product.entity.Product;
-import com.example.commerce.product.entity.ProductStatus;
 import com.example.commerce.product.repository.ProductRepository;
 import com.example.commerce.review.dto.CreateReviewRequest;
 import com.example.commerce.review.dto.CreateReviewResponse;
@@ -121,7 +119,7 @@ public class ReviewService {
     public Review getReviewById(Long reviewId){
         return reviewRepository.findById(reviewId).orElseThrow(
                 ()-> new ServiceException(ErrorCode.REVIEW_NOT_FOUND)
-        )
+        );
     }
 
     public Admin getAdminById(long adminId) {

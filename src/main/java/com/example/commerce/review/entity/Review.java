@@ -1,15 +1,11 @@
 package com.example.commerce.review.entity;
 
-import com.example.commerce.customer.entity.Customer;
 import com.example.commerce.global.common.BaseEntity;
 import com.example.commerce.order.entity.Order;
-import com.example.commerce.product.entity.Product;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Range;
 
 @Getter
 @Entity
