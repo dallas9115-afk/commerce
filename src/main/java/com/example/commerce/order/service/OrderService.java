@@ -58,7 +58,8 @@ public class OrderService {
                 calculateTotalPrice(request.getQuantity(), product.getPrice()),
                 product,
                 customer,
-                null
+                null,
+                false
         );
 
         Order newOrder = orderRepository.save(order);
@@ -109,7 +110,8 @@ public class OrderService {
                 calculateTotalPrice(request.getQuantity(), product.getPrice()),
                 product,
                 customer,
-                admin
+                admin,
+                false
         );
 
         Order newOrder = orderRepository.save(order);
