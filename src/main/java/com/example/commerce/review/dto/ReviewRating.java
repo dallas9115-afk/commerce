@@ -7,5 +7,5 @@ import lombok.Getter;
 @Getter
 public class ReviewRating {
     private int rating;
-    private int count;
+    private long count;
 }
