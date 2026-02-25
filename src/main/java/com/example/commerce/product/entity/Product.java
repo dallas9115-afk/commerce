@@ -50,11 +50,17 @@ public class Product extends BaseEntity {
     }
 
     // 상품 수정
-    public void update (String name, Category category, int price) {
+    // [수정] int price -> Integer price 로 변경
+    public void update (String name, Category category, Integer price) {
         this.name = name;
         this.category = category;
 
-        if (priceIsValid(price)) this.price = price;
+        // [추가] 가격이 null이 아닐 때만 유효성 검사 및 업데이트 진행
+        if (price != null) {
+            if (priceIsValid(price)) {
+                this.price = price;
+            }
+        }
     }
 
     public boolean priceIsValid(int price){
