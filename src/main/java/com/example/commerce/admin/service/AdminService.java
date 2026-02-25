@@ -178,12 +178,14 @@ public class AdminService {
         isActiveAdmin(getAdminById(userPrincipal.getId()));
         Admin admin = getAdminById(adminId);
 
-        // 보안 체크: 만약 이메일을 변경하려고 하는데, 그 이메일이 이미 다른 사람의 것이라면 막음
-        if (!admin.getEmail().equals(request.getEmail()) && adminRepository.existsByEmail(request.getEmail())) {
-            throw new ServiceException(ErrorCode.DUPLICATE_EMAIL);
+        // 보안 체크: 새로운 이메일이 입력되었을 경우에만 중복 검사 실행
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            if (!admin.getEmail().equals(request.getEmail()) && adminRepository.existsByEmail(request.getEmail())) {
+                throw new ServiceException(ErrorCode.DUPLICATE_EMAIL);
+            }
         }
 
-        // 엔티티 내부의 수정 메서드 호출 (Dirty Checking)
+        // 엔티티 내부의 수정 메서드 호출 (null 방어 로직은 엔티티에 구현됨)
         admin.update(request.getName(), request.getEmail(), request.getPhone());
 
         return new UpdateAdminResponse(

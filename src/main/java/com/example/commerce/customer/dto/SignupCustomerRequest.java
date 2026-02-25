@@ -20,8 +20,9 @@ public class SignupCustomerRequest {
     @Pattern(regexp = "^01[0-9]-\\d{3,4}-\\d{4}$", message = "전화번호 형식은 010-XXXX-XXXX 입니다.")
     private String customerPhone;
 
-    @NotBlank
-    @Size(min = 8)
+    // customerPassword 쪽에 메시지와 조건 적용
+    @NotBlank(message = "비밀번호는 필수입니다.")
+    @Size(min=8, max=20, message="비밀번호는 8자 이상, 20글자 이하입니다.")
     private String customerPassword;
 
 }

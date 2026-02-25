@@ -26,45 +26,46 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final AdminRepository adminRepository;
     private final CustomerRepository customerRepository;
-    // 고객 DB 조회 위해 CustomerRepository 주입
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // 1. Header에서 토큰 추출
         String bearerToken = request.getHeader("Authorization");
         String token = null;
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            token = bearerToken.substring(7); // "Bearer " 이후의 순수 토큰만 추출
+            token = bearerToken.substring(7);
         }
 
-        // 2. 토큰 유효성 검증 및 SecurityContext 에 인증 정보 저장
         if (token != null && jwtUtil.validateToken(token)) {
             Claims claims = jwtUtil.getUserInfoFromToken(token);
             String email = claims.getSubject();
-
-            // 토큰에서 사용자의 '역할(Role)'을 꺼냄.
-            // JwtUtil의 createToken 메서드에서 claim("role", role)로 넣은 값
             String role = claims.get("role", String.class);
 
-            // 3-A. 접근한 사용자가 고객(CUSTOMER)인 경우
             if ("CUSTOMER".equals(role)) {
                 Customer customer = customerRepository.findByEmail(email).orElse(null);
 
-                // 고객이 DB에 존재하고, 활성 상태인지 확인
-                if (customer != null && customer.getStatus() == CustomerStatus.ACTIVE) {
-                    // (주의: CustomerUserDetails 클래스는 별도로 만들어 주셔야 합니다)
+                if (customer != null) {
+                    // [수정] 고객 상태가 ACTIVE가 아니면 즉시 커스텀 에러 반환 및 요청 중단
+                    if (customer.getStatus() != CustomerStatus.ACTIVE) {
+                        sendErrorResponse(response, "정지되거나 비활성화된 고객 계정입니다.");
+                        return; // 필터 체인 중단
+                    }
+
                     CustomerUserDetails userDetails = new CustomerUserDetails(customer);
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
-            // 3-B. 접근한 사용자가 관리자(SUPER_ADMIN, OP_ADMIN, CS_ADMIN)인 경우
             else {
                 Admin admin = adminRepository.findByEmail(email).orElse(null);
 
-                // 기존 로직과 동일
-                if (admin != null && admin.getStatus().isLoginable()) {
+                if (admin != null) {
+                    // [수정] 관리자 계정이 로그인 불가능 상태면 즉시 커스텀 에러 반환
+                    if (!admin.getStatus().isLoginable()) {
+                        sendErrorResponse(response, "승인되지 않거나 정지된 관리자 계정입니다.");
+                        return; // 필터 체인 중단
+                    }
+
                     AdminUserDetails userDetails = new AdminUserDetails(admin);
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -72,7 +73,14 @@ public class JwtFilter extends OncePerRequestFilter {
                 }
             }
         }
-        // 다음 필터로 요청을 넘김
+
         filterChain.doFilter(request, response);
+    }
+
+    // [추가] 필터단에서 발생하는 비즈니스 예외를 JSON으로 포장해주는 메서드
+    private void sendErrorResponse(HttpServletResponse response, String message) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 Forbidden
+        response.getWriter().write("{\"status\": 403, \"code\": \"INVALID_ACCOUNT_STATUS\", \"message\": \"" + message + "\"}");
     }
 }

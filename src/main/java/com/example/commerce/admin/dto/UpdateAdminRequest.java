@@ -1,16 +1,16 @@
 package com.example.commerce.admin.dto;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 
 @Getter
 public class UpdateAdminRequest {
-    @NotBlank(message = "이름은 필수입니다.")
+
+    // [수정] @NotBlank 제거 (이름 수정 안 할 수도 있음)
     private String name;
 
-    @NotBlank(message = "이메일은 필수입니다.")
+    // [수정] @NotBlank 제거 (이메일 수정 안 할 수도 있음)
     @Email(message = "이메일 형식과 일치해야 합니다.")
     private String email;
 

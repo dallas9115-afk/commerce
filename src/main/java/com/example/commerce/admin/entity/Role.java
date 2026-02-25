@@ -19,22 +19,17 @@ public enum Role {
 
     // 역할 String 을 Enum 타입으로 변환
     public static Role from(String role) {
-        //System.out.println("role: "+ role);
-        // 입력받은 직책이 공백
+        // 입력받은 직책이 공백일 경우
         if (role == null || role.isBlank()) {
-            //System.out.println("role exception here1");
             throw new ServiceException(ErrorCode.INVALID_ROLE);
-            // 잘못 입력했다고 생각하고 잘못된 입력값 return
         }
 
-        // 직책 찾기
-        for (Role r : Role.values()) {
-            //System.out.println("role exception here2: "+r);
-            if (Role.valueOf(role) == r) {
-                return r;
-            }
+        try {
+            // [수정] valueOf는 매칭되는 값이 없으면 즉시 IllegalArgumentException을 던지므로 여기서 찾습니다.
+            return Role.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            // [수정] 500 에러 대신 우리가 만든 커스텀 예외(400)를 던집니다.
+            throw new ServiceException(ErrorCode.INVALID_ROLE);
         }
-
-        throw new ServiceException(ErrorCode.INVALID_ROLE);
     }
 }

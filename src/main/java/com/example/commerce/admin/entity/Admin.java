@@ -50,10 +50,17 @@ public class Admin extends BaseEntity {
         this.status = status;
     }
 
+    // [수정] : 값이 null 이거나 빈 칸이 아닐 때만 기존 정보를 덮어쓰도록 조치함.
     public void update(String name, String email, String phone){
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+        if (email != null && !email.isBlank()) {
+            this.email = email;
+        }
+        if (phone != null && !phone.isBlank()) {
+            this.phone = phone;
+        }
     }
 
     // 상태 변경을 엔티티 내부 메서드를 통해서 수행
