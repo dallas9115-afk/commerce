@@ -68,18 +68,15 @@ public class CustomerController {
     public ResponseEntity<CommonResponseDTO<List<GetOneCustomerResponse>>> findAllCustomer(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) CustomerStatus status,
-            @PageableDefault() Pageable pageable,
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable,
 
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ){
-//        Sort.Direction direction = desc ? Sort.Direction.DESC : Sort.Direction.ASC;
-//
-//        String sortValue = "name";
-//
-//        if ("email".equals(sort)) sortValue = "email";
-//        else if ("createdAt".equals(sort)) sortValue = "createdAt";
-
-//        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
         Page<GetOneCustomerResponse> response = customerService.findAllCustomer(userPrincipal, keyword, status, pageable);
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());
     }

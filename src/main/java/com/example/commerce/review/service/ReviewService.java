@@ -21,6 +21,7 @@ import com.example.commerce.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,7 +90,7 @@ public class ReviewService {
     }
 
     // 3. 리뷰 전체조회
-    public Page<GetReviewsResponse> getReviews(Long orderId, String keyword, int rating, PageRequest pageable) {
+    public Page<GetReviewsResponse> getReviews(Long orderId, String keyword, int rating, Pageable pageable) {
         Order order = getOrderById(orderId);
 
         // 특정 상품에 달린 리뷰만 get

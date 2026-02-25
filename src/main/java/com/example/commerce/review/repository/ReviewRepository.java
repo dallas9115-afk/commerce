@@ -22,7 +22,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("productId") Long productId,
             @Param("keyword") String keyword,
             @Param("rating") int rating,
-            PageRequest pageable);
+            Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE" +
             "(:productId = r.order.product.id)"

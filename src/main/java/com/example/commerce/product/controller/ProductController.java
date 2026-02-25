@@ -56,15 +56,13 @@ public class ProductController {
             @RequestParam(required = false) Category category,
             @RequestParam(required = false) ProductStatus status,
 
-            @PageableDefault() Pageable pageable
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "admin.email",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
             ) {
-//        Sort.Direction direction = (desc) ? Sort.Direction.DESC : Sort.Direction.ASC;
-//        String sortValue = "email";
-//        if ("price".equals(sort)) sortValue = "price";
-//        else if ("createdAt".equals(sort)) sortValue = "createdAt";
-//
-//        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
-
         Page<GetProductsResponse> response = productService.getAll(keyword, category, status, pageable);
 
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());

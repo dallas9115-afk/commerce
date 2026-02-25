@@ -34,12 +34,6 @@ public class OrderController {
     ResponseEntity<CommonResponseDTO<CreateOrderResponse>> create(
             @Valid @RequestBody CreateOrderRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        //고객이 주문
-        // 세션에서 customer 정보를 빼와야됨
-//        SessionCustomer sessionCustomer = (SessionCustomer) session.getAttribute("loginCustomer");
-//        if (sessionCustomer == null) {
-//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-//        }
 
         CreateOrderResponse response = orderService.create(userPrincipal, request);
 
@@ -52,13 +46,6 @@ public class OrderController {
     ResponseEntity<CommonResponseDTO<CreateOrderByAdminResponse>> create(
             @Valid @RequestBody CreateOrderByAdminRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-        //관리자 주문
-        // 세션에서 admin 정보를 빼와야됨
-
-//        SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
-//        if (sessionAdmin == null) {
-//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-//        }
 
         CreateOrderByAdminResponse response = orderService.createByAdmin(userPrincipal, request);
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response);
@@ -71,13 +58,17 @@ public class OrderController {
     public ResponseEntity<CommonResponseDTO<List<GetOrdersByAdminResponse>>> getAllByAdmin(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
-            @PageableDefault() Pageable pageable,
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
 
         Page<GetOrdersByAdminResponse> response = orderService.getAllByAdmin(keyword, status, pageable, userPrincipal);
         // 응답할 데이터 ( Page<GetAllAdminOrderResponse>  ) 를 만들기 위해서,
-        //
         //orderService에 있는 getAllByAdmin 이란 메서드를 사용할거다 .
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response.getContent());
     }
@@ -89,17 +80,15 @@ public class OrderController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
 
-            @PageableDefault() Pageable pageable,
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable,
 
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-//        Sort.Direction direction = (desc) ? Sort.Direction.DESC : Sort.Direction.ASC;
-//        String sortValue = "email";
-//        if ("price".equals(sort)) sortValue = "price";
-//        else if ("createdAt".equals(sort)) sortValue = "createdAt";
-//
-//        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
-
         Page<GetOrdersResponse> response = orderService.getAllByCustomer(userPrincipal, keyword, status, pageable);
 
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response.getContent());
@@ -113,11 +102,6 @@ public class OrderController {
             @PathVariable("id") Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-//        SessionAdmin sessionAdmin = (SessionAdmin) session.getAttribute("loginAdmin");
-//        if (sessionAdmin == null) {
-//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-//        }
-
         GetOneOrderByAdminResponse response = orderService.getOneAdminOrder(orderId, userPrincipal);
 
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
@@ -130,10 +114,6 @@ public class OrderController {
             @PathVariable("id") Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-//        SessionCustomer sessionCustomer = (SessionCustomer) session.getAttribute("loginCustomer");
-//        if (sessionCustomer == null) {
-//            throw new ServiceException(ErrorCode.BEFORE_LOGIN);
-//        }
         GetOneOrderResponse response = orderService.getOneOrder(orderId, userPrincipal);
 
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);

@@ -13,7 +13,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -59,18 +61,13 @@ public class ReviewController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) int rating,
 
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) boolean desc
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
     ){
-        Sort.Direction direction = (desc) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String sortValue = "createdAt";
-        if ("rating".equals(sort)) sortValue = "rating";
-
-        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
-
         Page<GetReviewsResponse> response = reviewService.getReviews(orderId, keyword, rating, pageable);
 
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());
