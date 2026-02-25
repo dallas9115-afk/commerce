@@ -25,10 +25,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             PageRequest pageable);
 
     @Query("SELECT r FROM Review r WHERE" +
-            "(:productId = r.order.product.id) AND "+
-            "(LIMIT 3)"
+            "(:productId = r.order.product.id)"
     )
-    List<GetOneReviewResponse> searchReviewsByProductId(
+    List<Review> searchReviewsByProductId(
             @Param("productId") Long productId,
             Pageable pageable);
 
@@ -42,8 +41,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 상품 별점 별 리뷰 개수
     @Query("SELECT new com.example.commerce.review.dto.ReviewRating(r.rating, COUNT(r)) FROM Review r " +
-            "WHERE :productId = r.order.product.id" +
-            "GROUP BY r.rating" +
+            "WHERE :productId = r.order.product.id " +
+            "GROUP BY r.rating " +
             "ORDER BY r.rating")
     List<ReviewRating> countListByProductId(@Param("productId") Long productId);
 }

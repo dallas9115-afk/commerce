@@ -13,7 +13,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -66,22 +68,18 @@ public class CustomerController {
     public ResponseEntity<CommonResponseDTO<List<GetOneCustomerResponse>>> findAllCustomer(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) CustomerStatus status,
-            @RequestParam(required = false) String sort,    // 클라이언트가 무엇을 기준으로 줄세울지 알려주는 값
-            @RequestParam(required = false) boolean desc,   // true 면 내림차순, false 거나 값이 없으면 오름차순
-
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @PageableDefault() Pageable pageable,
 
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ){
-        Sort.Direction direction = desc ? Sort.Direction.DESC : Sort.Direction.ASC;
+//        Sort.Direction direction = desc ? Sort.Direction.DESC : Sort.Direction.ASC;
+//
+//        String sortValue = "name";
+//
+//        if ("email".equals(sort)) sortValue = "email";
+//        else if ("createdAt".equals(sort)) sortValue = "createdAt";
 
-        String sortValue = "name";
-
-        if ("email".equals(sort)) sortValue = "email";
-        else if ("createdAt".equals(sort)) sortValue = "createdAt";
-
-        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
+//        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
         Page<GetOneCustomerResponse> response = customerService.findAllCustomer(userPrincipal, keyword, status, pageable);
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());
     }

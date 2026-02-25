@@ -89,20 +89,16 @@ public class OrderController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
 
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
-
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) boolean desc,
+            @PageableDefault() Pageable pageable,
 
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
-        Sort.Direction direction = (desc) ? Sort.Direction.DESC : Sort.Direction.ASC;
-        String sortValue = "email";
-        if ("price".equals(sort)) sortValue = "price";
-        else if ("createdAt".equals(sort)) sortValue = "createdAt";
-
-        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
+//        Sort.Direction direction = (desc) ? Sort.Direction.DESC : Sort.Direction.ASC;
+//        String sortValue = "email";
+//        if ("price".equals(sort)) sortValue = "price";
+//        else if ("createdAt".equals(sort)) sortValue = "createdAt";
+//
+//        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
 
         Page<GetOrdersResponse> response = orderService.getAllByCustomer(userPrincipal, keyword, status, pageable);
 

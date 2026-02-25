@@ -1,5 +1,6 @@
 package com.example.commerce.product.dto;
 
+import com.example.commerce.review.dto.GetOneReviewResponse;
 import com.example.commerce.review.dto.ReviewRating;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public record GetOneProductResponse(
         String adminName,
         String adminEmail,
 
+        List<GetOneReviewResponse> top3ReviewOfProduct,
         int countOfReview,
         double averageOfReview,
         List<ReviewRating> reviewRatingList

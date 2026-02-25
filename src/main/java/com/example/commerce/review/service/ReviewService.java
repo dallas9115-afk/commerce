@@ -80,6 +80,7 @@ public class ReviewService {
                 review.getId(),
                 review.getOrder().getOrderNo(),
                 review.getOrder().getCustomer().getName(),
+                review.getOrder().getCustomer().getEmail(),
                 review.getOrder().getProduct().getName(),
                 review.getRating(),
                 review.getContent(),

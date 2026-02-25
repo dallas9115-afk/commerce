@@ -32,10 +32,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Admin과 Customer의 회원가입/로그인 경로는 인증 없이 접근 허용
                         .requestMatchers(
-                                "/admins/signup",
-                                "/admins/login",
-                                "/customers/signup",
-                                "/customers/login",
+                                "/admins/signUp",
+                                "/admins/logIn",
+                                "/customers/signUp",
+                                "/customers/logIn",
                                 "/products",
                                 "/products/**"
 

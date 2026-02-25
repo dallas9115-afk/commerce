@@ -13,7 +13,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +32,7 @@ import java.util.List;
 public class AdminController {
     private final AdminService adminService;
 
-    @PostMapping("/signup")
+    @PostMapping("/signUp")
     ResponseEntity<CommonResponseDTO<SignupAdminResponse>> signup(
             @Valid @RequestBody SignupAdminRequest request
 
@@ -41,7 +43,7 @@ public class AdminController {
         //return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/login")
+    @PostMapping("/logIn")
     public ResponseEntity<CommonResponseDTO<LoginAdminResponse>> login(
             @Valid @RequestBody LoginAdminRequest request
     ){
@@ -54,7 +56,7 @@ public class AdminController {
     }
 
     // 로그아웃 API 신규 구현
-    @PostMapping("/logout")
+    @PostMapping("/logOut")
     public ResponseEntity<CommonResponseDTO<Void>> logout(
             @AuthenticationPrincipal AdminUserDetails userDetails
     ) {
@@ -76,14 +78,7 @@ public class AdminController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Role role,
             @RequestParam(required = false) AdminStatus status,
-            @RequestParam(required = false) String sort,    // 클라이언트가 무엇을 기준으로 줄세울지 알려주는 값
-            @RequestParam(required = false) boolean desc,   // true 면 내림차순, false 거나 값이 없으면 오름차순
-            /*
-            defaultValue : 클라이언트가 파라미터를 보내지 않았을 때 기본으로 적용되는 값
-            페이징 처리 시 프론트엔드가 번호를 생략하면 1페이지부터 10개씩 보여줌
-             */
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @PageableDefault() Pageable pageable,
 
             // 정렬 기준 추가했습니당
             // request param 이름 -> sort
@@ -103,17 +98,17 @@ public class AdminController {
 //        SessionAdmin sessionAdmin = getSessionAdmin(session);
 
         //오름차순(ASC) 으로 할지 내림차순(DESC) 로 할지 결정
-        Sort.Direction direction = desc ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        // 기본설정은 Role(직책) 기준으로 정렬
-        String sortValue = "role";
-
-        // 만일 클라이언트가 email 이나 생성순서(CreatedAt) 기준 정렬 요청 시 정렬 기준 변경
-        if ("email".equals(sort)) sortValue = "email";
-        else if ("createdAt".equals(sort)) sortValue = "createdAt";
-
-        // 페이지 번호와 크기만 있던 기존 코드에서 정렬 기준과 오름/내림차순 받을 수 있게 변경
-        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
+//        Sort.Direction direction = desc ? Sort.Direction.DESC : Sort.Direction.ASC;
+//
+//        // 기본설정은 Role(직책) 기준으로 정렬
+//        String sortValue = "role";
+//
+//        // 만일 클라이언트가 email 이나 생성순서(CreatedAt) 기준 정렬 요청 시 정렬 기준 변경
+//        if ("email".equals(sort)) sortValue = "email";
+//        else if ("createdAt".equals(sort)) sortValue = "createdAt";
+//
+//        // 페이지 번호와 크기만 있던 기존 코드에서 정렬 기준과 오름/내림차순 받을 수 있게 변경
+//        PageRequest pageable = PageRequest.of(page - 1, size, Sort.by(direction, sortValue));
         Page<GetOneAdminResponse> response = adminService.getAdminList(userPrincipal, keyword, role, status, pageable);
 
         // 200 OK 상태 코드와 함께 데이터 반환

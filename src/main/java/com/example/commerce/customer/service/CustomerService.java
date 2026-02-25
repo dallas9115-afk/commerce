@@ -17,6 +17,7 @@ import com.example.commerce.global.security.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -129,7 +130,7 @@ public class CustomerService {
     }
 
     // 고객 리스트 조회
-    public Page<GetOneCustomerResponse> findAllCustomer(UserPrincipal userPrincipal, String keyword, CustomerStatus status, PageRequest pageable) {
+    public Page<GetOneCustomerResponse> findAllCustomer(UserPrincipal userPrincipal, String keyword, CustomerStatus status, Pageable pageable) {
 
         // 어차피 관리자만 로그인 되었기 때문에 관리자가 활성상태인지만 확인
         isActiveAdmin(getAdminById(userPrincipal.getId()));

@@ -12,6 +12,7 @@ import com.example.commerce.product.entity.ProductStatus;
 import com.example.commerce.product.repository.ProductRepository;
 import com.example.commerce.review.dto.GetOneReviewResponse;
 import com.example.commerce.review.dto.ReviewRating;
+import com.example.commerce.review.entity.Review;
 import com.example.commerce.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -77,7 +79,20 @@ public class ProductService {
         // 평균 평점, 전체 리뷰 개수, 별점별 개수 출력
         Pageable pageable = PageRequest.of(0, 3);
 
-        List<GetOneReviewResponse> reviews = reviewRepository.searchReviewsByProductId(product.getId(), pageable);
+        List<Review> reviews = reviewRepository.searchReviewsByProductId(product.getId(), pageable);
+        List<GetOneReviewResponse> dtos = new ArrayList<>();
+        for (Review review : reviews) {
+            GetOneReviewResponse dto = new GetOneReviewResponse(
+                    review.getId(),
+                    review.getOrder().getOrderNo(),
+                    review.getOrder().getCustomer().getName(),
+                    review.getOrder().getProduct().getName(),
+                    review.getRating(),
+                    review.getContent(),
+                    review.getCreatedAt()
+            );
+            dtos.add(dto);
+        }
 
         // 리뷰 개수
         int countOfReview = reviewRepository.countByProductId(product.getId());
@@ -98,6 +113,7 @@ public class ProductService {
                 product.getAdmin().getName(),
                 product.getAdmin().getEmail(),
 
+                dtos,
                 countOfReview,
                 averageOfReview,
                 reviewRatingList
@@ -105,7 +121,7 @@ public class ProductService {
     }
 
     // 전체 조회
-    public Page<GetProductsResponse> getAll(String keyword, Category category, ProductStatus status, PageRequest pageable) {
+    public Page<GetProductsResponse> getAll(String keyword, Category category, ProductStatus status, Pageable pageable) {
         //admin id 로 admin 을 찾고, 활성상태인지 확인
         //isActiveAdmin(getAdminById(sessionAdminId));
         Page<Product> products = productRepository.searchProducts(keyword, category, status, pageable);
