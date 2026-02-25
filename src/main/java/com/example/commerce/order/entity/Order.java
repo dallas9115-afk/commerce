@@ -5,19 +5,9 @@ import com.example.commerce.customer.entity.Customer;
 import com.example.commerce.global.common.BaseEntity;
 import com.example.commerce.product.entity.Product;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import com.example.commerce.global.exception.ErrorCode;
-import com.example.commerce.global.exception.ServiceException;
-import com.example.commerce.product.entity.Product;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-
 import java.util.UUID;
 
 @Getter
@@ -29,36 +19,23 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 주문 번호 -> orderNo
     @Column(nullable = false)
     private UUID orderNo = UUID.randomUUID();
 
-
-    //    주문 상태 (이넘사용)
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
-
-    //    주문 수량 -> ordercount
     @Column(nullable = false)
     private int quantity;
 
-
-
-
-    // 주문 취소 사유
     @Column
     private String cancelReason;
 
     private boolean isReviewed;
 
-
-
-    // 주문 총 금액
     private long totalPrice;
 
-    // 상품 금액
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
@@ -69,8 +46,9 @@ public class Order extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "admin_id")
-    private Admin admin; //cs 관리자가 주문을 생성했을 때 저장됨 -> nullable
+    private Admin admin;
 
+    // 생성자 수정: orderStatus 초기화 로직 추가
     public Order(int quantity, long totalPrice, Product product, Customer customer, Admin admin, boolean isReviewed) {
         this.quantity = quantity;
         this.totalPrice = totalPrice;
@@ -78,27 +56,14 @@ public class Order extends BaseEntity {
         this.customer = customer;
         this.admin = admin;
         this.isReviewed = isReviewed;
+        this.orderStatus = OrderStatus.PREPARING; // 신규 주문 시 기본 상태 설정
     }
 
-
-    // 주문을 취소 상태로 변경
-    // 엔티티에서 관리하는 이유 : 규칙이 한 곳에 있어서 수정이 편하다.
     public void cancel(String reason) {
-
-        // 준비 상태일 때만 취소 가능
-        // statusName이 PREPARING과 같지 않을 경우 true
-//        if (!this.statusName.equals(OrderStatus.PREPARING.toString()))  {
-//            throw new ServiceException(ErrorCode.CANCEL_FORBIDDEN);
-//        }
-
         if (orderStatus != OrderStatus.PREPARING){
-            throw new ServiceException(ErrorCode.INVALID_STATUS);
+            throw new com.example.commerce.global.exception.ServiceException(com.example.commerce.global.exception.ErrorCode.INVALID_STATUS);
         }
-
-        // 취소로 상태 변경
-        //this.orderStatus = OrderStatus.CANCELED;
         updateStatus(OrderStatus.CANCELED);
-        // 취소 사유 저장
         this.cancelReason = reason;
     }
 
@@ -107,6 +72,6 @@ public class Order extends BaseEntity {
     }
 
     public void updateIsReviewd(){
-        this.isReviewed = false;
+        this.isReviewed = true; // 리뷰 작성 시 true로 변경하는 로직
     }
 }

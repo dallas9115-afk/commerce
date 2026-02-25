@@ -22,19 +22,15 @@ public enum Category {
     private final String categoryName;
 
     public static Category from(String role) {
-        // 카테고리 값이 공백
         if (role == null || role.isBlank()) {
             throw new ServiceException(ErrorCode.INVALID_CATEGORY);
-            // 잘못 입력했다고 생각하고 잘못된 입력값 return
         }
 
-        // 카테고리 찾기
-        for (Category r : Category.values()) {
-            if (Category.valueOf(role) == r) {
-                return r;
-            }
+        try {
+            // Enum 상수를 즉시 찾아 반환하며, 없을 경우 예외를 잡아 커스텀 예외를 던집니다.
+            return Category.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            throw new ServiceException(ErrorCode.INVALID_CATEGORY);
         }
-
-        throw new ServiceException(ErrorCode.INVALID_CATEGORY);
     }
 }
