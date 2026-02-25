@@ -1,15 +1,19 @@
 package com.example.commerce.order.dto;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 @Getter
 public class CreateOrderByAdminRequest {
-    // 관리자는 주문자와 상품 ID 자유롭게 확인할 수 있음을 가정함.
-    private int quantity;
 
-    // 주문자 정보
-    private long customerId;
+    @NotNull(message = "주문 수량은 필수입니다.")
+    @Min(value = 1, message = "주문 수량은 1개 이상이어야 합니다.")
+    private Integer quantity; // int -> Integer 수정
 
-    // 상품 정보
-    private long productId;
+    @NotNull(message = "고객 ID는 필수입니다.")
+    private Long customerId; // long -> Long 수정
+
+    @NotNull(message = "상품 ID는 필수입니다.")
+    private Long productId; // long -> Long 수정
 }

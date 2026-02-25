@@ -1,6 +1,7 @@
 package com.example.commerce.global.config;
 
 import com.example.commerce.global.security.JwtFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,15 +23,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 1. CSRF 비활성화 (JWT를 사용하므로 불필요함)
                 .csrf(csrf -> csrf.disable())
-
-                // 2. 세션 관리 정책: STATELESS (서버가 세션을 생성하지도, 사용하지도 않음)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // 3. 엔드포인트 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // Admin과 Customer의 회원가입/로그인 경로는 인증 없이 접근 허용
                         .requestMatchers(
                                 "/admins/signUp",
                                 "/admins/logIn",
@@ -38,13 +33,22 @@ public class SecurityConfig {
                                 "/customers/logIn",
                                 "/products",
                                 "/products/**"
-
                         ).permitAll()
-                        // 그 외의 모든 요청은 인증(토큰) 필요
                         .anyRequest().authenticated()
                 )
-
-                // 4. JWT 필터 등록: 기본 인증 필터(UsernamePasswordAuthenticationFilter)보다 먼저 실행되도록 조치
+                // [추가] 시큐리티 필터단 에러를 공통 포맷 JSON으로 반환
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("{\"status\": 401, \"code\": \"E003\", \"message\": \"로그인이 필요합니다.\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("{\"status\": 403, \"code\": \"E004\", \"message\": \"권한이 없습니다.\"}");
+                        })
+                )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

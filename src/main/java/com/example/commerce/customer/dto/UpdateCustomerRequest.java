@@ -1,12 +1,14 @@
 package com.example.commerce.customer.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 
 @Getter
 public class UpdateCustomerRequest {
 
+    @NotBlank(message = "이름은 필수입니다.") // 💡 [추가] 공백 이름 방지
     private String customerName;
 
     @Email(message = "이메일 형식과 일치해야합니다.")

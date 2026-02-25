@@ -35,7 +35,7 @@ public class ReviewController {
     @PostMapping
     ResponseEntity<CommonResponseDTO<CreateReviewResponse>> create (
             @PathVariable Long orderId,
-            @Valid CreateReviewRequest request,
+            @Valid @RequestBody CreateReviewRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ){
 

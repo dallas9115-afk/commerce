@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import com.example.commerce.order.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -20,7 +19,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
 
 @RequiredArgsConstructor
 @RestController
@@ -34,110 +32,94 @@ public class OrderController {
     ResponseEntity<CommonResponseDTO<CreateOrderResponse>> create(
             @Valid @RequestBody CreateOrderRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
         CreateOrderResponse response = orderService.create(userPrincipal, request);
-
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response);
     }
 
-    //2. 관리자의 주문 생성
+    // 2. 관리자의 주문 생성
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
     @PostMapping("/admins/orders")
     ResponseEntity<CommonResponseDTO<CreateOrderByAdminResponse>> create(
             @Valid @RequestBody CreateOrderByAdminRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
         CreateOrderByAdminResponse response = orderService.createByAdmin(userPrincipal, request);
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response);
     }
 
-
-    // 관리자의 주문 전체 조회
+    // 3. 관리자의 주문 전체 조회 [수정] /admin/orders -> /admins/orders 로 통일
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @GetMapping("/admin/orders") // 해당 endpoint로 get 요청이 들어올 경우 아래 메서드로 응답할 거다.
+    @GetMapping("/admins/orders")
     public ResponseEntity<CommonResponseDTO<List<GetOrdersByAdminResponse>>> getAllByAdmin(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable,
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-
         Page<GetOrdersByAdminResponse> response = orderService.getAllByAdmin(keyword, status, pageable, userPrincipal);
-        // 응답할 데이터 ( Page<GetAllAdminOrderResponse>  ) 를 만들기 위해서,
-        //orderService에 있는 getAllByAdmin 이란 메서드를 사용할거다 .
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response.getContent());
     }
 
-    // 고객의 주문 전체 조회
+    // 4. 고객의 주문 전체 조회
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/orders")
     public ResponseEntity<CommonResponseDTO<List<GetOrdersResponse>>> getAllbyCustomer(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) OrderStatus status,
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            ) Pageable pageable,
-
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ) {
         Page<GetOrdersResponse> response = orderService.getAllByCustomer(userPrincipal, keyword, status, pageable);
-
         return CommonResponseHandler.success(SuccessCode.ORDER_SUCCESSFUL, response.getContent());
     }
 
-
-    // 관리자의 주문 단건 조회
+    // 5. 관리자의 주문 단건 조회
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
     @GetMapping("/admins/orders/{id}")
     ResponseEntity<CommonResponseDTO<GetOneOrderByAdminResponse>> getOne(
             @PathVariable("id") Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
         GetOneOrderByAdminResponse response = orderService.getOneAdminOrder(orderId, userPrincipal);
-
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
     }
 
-    // 고객의 주문 단건 조회
+    // 6. 고객의 주문 단건 조회
     @PreAuthorize("hasRole('CUSTOMER')")
     @GetMapping("/orders/{id}")
     ResponseEntity<CommonResponseDTO<GetOneOrderResponse>> getOneOrder(
             @PathVariable("id") Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
-
         GetOneOrderResponse response = orderService.getOneOrder(orderId, userPrincipal);
-
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
     }
 
-    // 주문 취소
-    @PreAuthorize("isAuthenticated()")
-    @PatchMapping("/admins/orders/{id}/cancel") // [수정] order -> orders (복수형 통일)
-    ResponseEntity<CommonResponseDTO<CancelOrderResponse>> getCancel(
+    // 7. 관리자의 주문 취소
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
+    @PatchMapping("/admins/orders/{id}/cancel")
+    ResponseEntity<CommonResponseDTO<CancelOrderResponse>> cancelByAdmin(
             @PathVariable("id") Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @Valid @RequestBody CancelOrderRequest request) { // [수정] @RequestBody 추가
-
+            @Valid @RequestBody CancelOrderRequest request) {
         CancelOrderResponse response = orderService.cancelByAdmin(orderId, userPrincipal, request);
         return CommonResponseHandler.success(SuccessCode.DELETE_SUCCESSFUL, response);
     }
 
-    // 주문 완료
+    // 8. [추가] 고객 본인의 주문 취소 (기존 서비스 로직 재사용)
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @PatchMapping("/orders/{id}/cancel")
+    ResponseEntity<CommonResponseDTO<CancelOrderResponse>> cancelByCustomer(
+            @PathVariable("id") Long orderId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody CancelOrderRequest request) {
+        CancelOrderResponse response = orderService.cancelByAdmin(orderId, userPrincipal, request);
+        return CommonResponseHandler.success(SuccessCode.DELETE_SUCCESSFUL, response);
+    }
+
+    // 9. 주문 완료 (배송 완료)
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @PatchMapping("/admins/orders/{id}/delivered") // [수정] {orderId} -> {id} 통일
+    @PatchMapping("/admins/orders/{id}/delivered")
     ResponseEntity<CommonResponseDTO<String>> deliverCompleted(
-            @PathVariable("id") Long orderId, // [수정] 매핑 변수에 맞게 @PathVariable("id") 명시
-            @AuthenticationPrincipal UserPrincipal userPrincipal
-    ){
+            @PathVariable("id") Long orderId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal){
         orderService.deliverCompleted(orderId, userPrincipal);
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, "배달이 완료되었습니다.");
     }

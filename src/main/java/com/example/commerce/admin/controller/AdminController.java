@@ -155,7 +155,8 @@ public class AdminController {
     @PreAuthorize("#adminId == principal.id or hasRole('SUPER_ADMIN')")
     @PutMapping("/{adminId}")
     public ResponseEntity<CommonResponseDTO<UpdateAdminResponse>> updateAdminInfo(
-            @PathVariable Long adminId, @RequestBody UpdateAdminRequest request,
+            @PathVariable Long adminId,
+            @Valid @RequestBody UpdateAdminRequest request, // [수정] @Valid 추가
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
 
         UpdateAdminResponse response = adminService.updateAdminInfo(adminId, request, userPrincipal);

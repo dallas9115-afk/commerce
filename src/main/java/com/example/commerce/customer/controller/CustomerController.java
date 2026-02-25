@@ -86,7 +86,7 @@ public class CustomerController {
     @PatchMapping("/{id}")
     public ResponseEntity<CommonResponseDTO<GetOneCustomerResponse>> updateCustomer(
             @PathVariable Long id,
-            @RequestBody UpdateCustomerRequest request,
+            @Valid @RequestBody UpdateCustomerRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ) {
         GetOneCustomerResponse response = customerService.updateCustomer(id, request, userPrincipal);
@@ -109,10 +109,10 @@ public class CustomerController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<CommonResponseDTO<UpdateCustomerStatusResponse>> updateCustomerStatus(
             @PathVariable Long id,
-            @RequestBody UpdateCustomerStatusRequest requset,
+            @Valid @RequestBody UpdateCustomerStatusRequest request,
             @AuthenticationPrincipal UserPrincipal userPrincipal
     ){
-        UpdateCustomerStatusResponse response = customerService.updateCustomerStatus(id, requset, userPrincipal);
+        UpdateCustomerStatusResponse response = customerService.updateCustomerStatus(id, request, userPrincipal);
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, response);
     }
 }

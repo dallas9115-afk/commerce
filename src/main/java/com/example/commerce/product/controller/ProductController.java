@@ -68,7 +68,7 @@ public class ProductController {
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response.getContent());
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN')")
     @PutMapping("/products/{productId}")
     public ResponseEntity<CommonResponseDTO<UpdateProductResponse>> update(
             @PathVariable Long productId,@Valid @RequestBody UpdateProductRequest request,
@@ -77,7 +77,7 @@ public class ProductController {
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, response);
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN')")
     @DeleteMapping("/products/{productId}")
     public ResponseEntity<CommonResponseDTO<Void>> delete(
             @PathVariable Long productId,
@@ -86,7 +86,7 @@ public class ProductController {
         return CommonResponseHandler.success(SuccessCode.DELETE_SUCCESSFUL);
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN')")
     @PatchMapping("/products/{productId}/discontinue")
     public ResponseEntity<CommonResponseDTO<String>> discontinueProduct(
             @PathVariable Long productId,
@@ -95,7 +95,7 @@ public class ProductController {
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, "상품이 단종 상태로 변경되었습니다.");
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN')")
     @PatchMapping("/products/{productId}") // [수정] 오타 교정 (proudctId -> productId)
     public ResponseEntity<CommonResponseDTO<UpdateStockResponse>> restockProduct(
             @PathVariable("productId") Long productId,

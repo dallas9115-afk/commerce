@@ -85,5 +85,14 @@ public class GlobalExceptionHandler {
                 .body(buildErrorResponse(errorCode, errorCode.getMessage(), request.getRequestURI()));
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            org.springframework.http.converter.HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("HttpMessageNotReadableException : {}", e.getMessage());
+        return ResponseEntity
+                .badRequest()
+                .body(buildErrorResponse(ErrorCode.INVALID_INPUT_VALUE, "입력값의 형식이 올바르지 않거나 필수값이 누락되었습니다.", request.getRequestURI()));
+    }
+
 
 }
