@@ -10,11 +10,19 @@ import com.example.commerce.product.entity.Category;
 import com.example.commerce.product.entity.Product;
 import com.example.commerce.product.entity.ProductStatus;
 import com.example.commerce.product.repository.ProductRepository;
+import com.example.commerce.review.dto.GetOneReviewResponse;
+import com.example.commerce.review.dto.ReviewRating;
+import com.example.commerce.review.entity.Review;
+import com.example.commerce.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
     private final ProductRepository productRepository;
     private final AdminRepository adminRepository;
+    private final ReviewRepository reviewRepository;
 
     // 생성
     @Transactional
@@ -66,6 +75,35 @@ public class ProductService {
 //                -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
         Product product = getProductById(productId);
 
+        // 상품 개별 조회 때 리뷰 3개 +
+        // 평균 평점, 전체 리뷰 개수, 별점별 개수 출력
+        Pageable pageable = PageRequest.of(0, 3);
+
+        List<Review> reviews = reviewRepository.searchReviewsByProductId(product.getId(), pageable);
+        List<GetOneReviewResponse> dtos = new ArrayList<>();
+        for (Review review : reviews) {
+            GetOneReviewResponse dto = new GetOneReviewResponse(
+                    review.getId(),
+                    review.getOrder().getOrderNo(),
+                    review.getOrder().getCustomer().getName(),
+                    review.getOrder().getCustomer().getEmail(),
+                    review.getOrder().getProduct().getName(),
+                    review.getRating(),
+                    review.getContent(),
+                    review.getCreatedAt()
+            );
+            dtos.add(dto);
+        }
+
+        // 리뷰 개수
+        Integer countOfReview = reviewRepository.countByProductId(product.getId());
+
+        // 리뷰 평균
+        double averageOfReview = reviewRepository.averageRating(product.getId());
+
+        // 별점 별 리뷰 개수
+        List<ReviewRating> reviewRatingList = reviewRepository.countListByProductId(product.getId());
+
         return new GetOneProductResponse(
                 product.getName(),
                 product.getCategory().getCategoryName(),
@@ -74,12 +112,17 @@ public class ProductService {
                 product.getStatus().getStatusName(),
                 product.getCreatedAt(),
                 product.getAdmin().getName(),
-                product.getAdmin().getEmail()
+                product.getAdmin().getEmail(),
+
+                dtos,
+                countOfReview,
+                averageOfReview,
+                reviewRatingList
         );
     }
 
     // 전체 조회
-    public Page<GetProductsResponse> getAll(String keyword, Category category, ProductStatus status, PageRequest pageable) {
+    public Page<GetProductsResponse> getAll(String keyword, Category category, ProductStatus status, Pageable pageable) {
         //admin id 로 admin 을 찾고, 활성상태인지 확인
         //isActiveAdmin(getAdminById(sessionAdminId));
         Page<Product> products = productRepository.searchProducts(keyword, category, status, pageable);

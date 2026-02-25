@@ -51,6 +51,8 @@ public class Order extends BaseEntity {
     @Column
     private String cancelReason;
 
+    private boolean isReviewed;
+
 
 
     // 주문 총 금액
@@ -69,12 +71,13 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "admin_id")
     private Admin admin; //cs 관리자가 주문을 생성했을 때 저장됨 -> nullable
 
-    public Order(int quantity, long totalPrice, Product product, Customer customer, Admin admin) {
+    public Order(int quantity, long totalPrice, Product product, Customer customer, Admin admin, boolean isReviewed) {
         this.quantity = quantity;
         this.totalPrice = totalPrice;
         this.product = product;
         this.customer = customer;
         this.admin = admin;
+        this.isReviewed = isReviewed;
     }
 
 
@@ -101,5 +104,9 @@ public class Order extends BaseEntity {
 
     public void updateStatus(OrderStatus orderStatus){
         this.orderStatus = orderStatus;
+    }
+
+    public void updateIsReviewd(){
+        this.isReviewed = false;
     }
 }

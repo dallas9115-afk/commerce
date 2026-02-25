@@ -157,13 +157,10 @@ public class AdminService {
 
     // 개별 관리자의 상세정보 조회
     public GetOneAdminResponse getAdminDetail(Long adminId, UserPrincipal userPrincipal) {
-        //isActiveAdmin(getAdminById(userPrincipal.getId())); // 로그인 한 관리자가 활성상태인지 확인
-
+        isActiveAdmin(getAdminById(userPrincipal.getId()));
         // 찾으려는 관리자가 존재하는지 확인
-        Admin admin = getAdminById(userPrincipal.getId());
-        isActiveAdmin(admin);
+        Admin admin = getAdminById(adminId);
 
-        //return AdminDetailResponse.from(admin);
         return new GetOneAdminResponse(
                 admin.getId(),
                 admin.getName(),

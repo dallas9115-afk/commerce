@@ -43,7 +43,8 @@ public enum ErrorCode {
     //공통에러는 C 로 시작
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C001", "잘못된 입력값입니다,"),
     INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "C003", "유효하지 않은 카테고리입니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C004", "서버 내부 오류가 발생했습니다."),
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "E009", "존재하지 않는 리뷰입니다.");
 
     // 상태코드, 내가 지정한 오류코드, 출력할 메시지
     private final HttpStatus status;
