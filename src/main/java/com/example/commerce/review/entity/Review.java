@@ -20,9 +20,9 @@ public class Review extends BaseEntity {
     private String content;
 
     @Column
-    private int rating;
+    private Integer rating;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "order_id")
     private Order order;
 

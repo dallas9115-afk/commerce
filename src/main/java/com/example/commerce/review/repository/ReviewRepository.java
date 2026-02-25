@@ -21,7 +21,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Review> searchReviews(
             @Param("productId") Long productId,
             @Param("keyword") String keyword,
-            @Param("rating") int rating,
+            @Param("rating") Integer rating,
             Pageable pageable);
 
     @Query("SELECT r FROM Review r WHERE" +
@@ -33,7 +33,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 상품 리뷰 개수
     @Query("SELECT COUNT(r) FROM Review r WHERE r.order.product.id = :productId")
-    int countByProductId(@Param("productId") Long productId);
+    Integer countByProductId(@Param("productId") Long productId);
 
     // 상품 리뷰 평균
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.order.product.id = :productId")

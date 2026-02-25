@@ -74,7 +74,7 @@ public class ReviewController {
     }
 
     // 4. 리뷰 삭제
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN')")
     @DeleteMapping("/{reviewId}")
     ResponseEntity<CommonResponseDTO<Void>> delete(
             @PathVariable Long reviewId,

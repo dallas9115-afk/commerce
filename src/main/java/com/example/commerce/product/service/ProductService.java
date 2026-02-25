@@ -86,6 +86,7 @@ public class ProductService {
                     review.getId(),
                     review.getOrder().getOrderNo(),
                     review.getOrder().getCustomer().getName(),
+                    review.getOrder().getCustomer().getEmail(),
                     review.getOrder().getProduct().getName(),
                     review.getRating(),
                     review.getContent(),
@@ -95,7 +96,7 @@ public class ProductService {
         }
 
         // 리뷰 개수
-        int countOfReview = reviewRepository.countByProductId(product.getId());
+        Integer countOfReview = reviewRepository.countByProductId(product.getId());
 
         // 리뷰 평균
         double averageOfReview = reviewRepository.averageRating(product.getId());

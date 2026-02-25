@@ -105,4 +105,8 @@ public class Order extends BaseEntity {
     public void updateStatus(OrderStatus orderStatus){
         this.orderStatus = orderStatus;
     }
+
+    public void updateIsReviewd(){
+        this.isReviewed = false;
+    }
 }

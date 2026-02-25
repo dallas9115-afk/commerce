@@ -62,6 +62,7 @@ public class ReviewService {
 
         // 저장
         Review savedReview = reviewRepository.save(review);
+        order.updateIsReviewd();
 
         return new CreateReviewResponse(
                 savedReview.getId(),
