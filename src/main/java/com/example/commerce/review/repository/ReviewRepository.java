@@ -49,4 +49,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Query("SELECT new com.example.commerce.review.dto.ReviewRating(r.rating, COUNT(r)) " +
             "FROM Review r GROUP BY r.rating ORDER BY r.rating")
     List<ReviewRating> countAllReviewRatings();
+
+    // [추가] 대시보드 Summary 전용 전체 리뷰 수 및 평균 평점
+    @Query("SELECT COUNT(r) FROM Review r")
+    long countAllReviews();
+
+    @Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r")
+    Double averageGlobalRating();
 }

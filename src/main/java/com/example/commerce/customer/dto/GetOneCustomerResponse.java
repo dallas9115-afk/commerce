@@ -9,5 +9,7 @@ public record GetOneCustomerResponse(
         String customerPhone,
         String customerStatus,
         LocalDateTime customerCreatedAt,
-        LocalDateTime customerModifiedAt
+        LocalDateTime customerModifiedAt,
+        long totalOrderCount,     // [추가] 총 주문 수
+        long totalPurchaseAmount  // [추가] 총 구매 금액
 ) {}

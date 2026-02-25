@@ -14,6 +14,7 @@ import com.example.commerce.global.security.JwtUtil;
 import com.example.commerce.global.security.UserPrincipal;
 import com.example.commerce.global.security.entity.RefreshToken;
 import com.example.commerce.global.security.repository.RefreshTokenRepository;
+import com.example.commerce.order.repository.OrderRepository; // [추가]
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,8 +35,11 @@ public class CustomerService {
     private final PasswordEncoder passwordEncoder;
     private final AdminRepository adminRepository;
 
-    // [추가] JWT 발급을 위한 JwtUtil 의존성 주입
+    // JWT 발급을 위한 JwtUtil 의존성 주입
     private final JwtUtil jwtUtil;
+
+    // [추가] 고객의 주문 통계를 가져오기 위한 의존성 주입
+    private final OrderRepository orderRepository;
 
     @Transactional
     public SignupCustomerResponse createCustomer(SignupCustomerRequest request) {
@@ -81,11 +85,10 @@ public class CustomerService {
         }
 
         // JWT 토큰 생성 (역할은 "CUSTOMER"로 명시)
-        //String token = jwtUtil.createToken(customer.getId(), customer.getEmail(), "CUSTOMER");
         String accessToken = jwtUtil.createToken(customer.getId(), customer.getEmail(), "CUSTOMER");
         String refreshToken = jwtUtil.createRefreshToken(customer.getEmail());
 
-        // 2. Refresh Token DB 저장 (이미 존재하면 Update, 없으면 Insert)
+        // Refresh Token DB 저장 (이미 존재하면 Update, 없으면 Insert)
         RefreshToken tokenEntity = refreshTokenRepository.findByEmail(customer.getEmail())
                 .orElse(new RefreshToken(customer.getEmail(), refreshToken));
 
@@ -105,18 +108,19 @@ public class CustomerService {
     public GetOneCustomerResponse findCustomer(Long id, UserPrincipal userPrincipal) {
 
         // userPrincipal 이 활성화 상태인지 확인
-        // customer 은 customer repository 에서 확인,
         if (userPrincipal.getRole().equals("CUSTOMER")){
             isActiveCustomer(getCustomerById(userPrincipal.getId()));
-        }else if (userPrincipal instanceof AdminUserDetails){
-            // admin 은 admin repository 에서 확인
+        } else if (userPrincipal instanceof AdminUserDetails){
             isActiveAdmin(getAdminById(userPrincipal.getId()));
-        }else{
-            // 둘 다 아니라면 예상치 못한 로그인과정에서의 오류가 발생했다고 가정, before login exception 반환
+        } else {
             throw new ServiceException(ErrorCode.BEFORE_LOGIN);
         }
 
         Customer customer = getCustomerById(id);
+
+        // 💡 [추가] 고객의 총 주문 수와 구매 금액 계산
+        long totalOrderCount = orderRepository.countByCustomerId(customer.getId());
+        long totalPurchaseAmount = orderRepository.sumTotalPriceByCustomerId(customer.getId());
 
         return new GetOneCustomerResponse(
                 customer.getId(),
@@ -125,7 +129,9 @@ public class CustomerService {
                 customer.getPhone(),
                 customer.getStatus().getStatusName(),
                 customer.getCreatedAt(),
-                customer.getModifiedAt()
+                customer.getModifiedAt(),
+                totalOrderCount,     // [추가]
+                totalPurchaseAmount  // [추가]
         );
     }
 
@@ -137,15 +143,23 @@ public class CustomerService {
 
         Page<Customer> customers = customerRepository.searchCustomers(keyword, status, pageable);
 
-        return customers.map(customer -> new GetOneCustomerResponse(
-                customer.getId(),
-                customer.getName(),
-                customer.getEmail(),
-                customer.getPhone(),
-                customer.getStatus().getStatusName(),
-                customer.getCreatedAt(),
-                customer.getModifiedAt()
-        ));
+        return customers.map(customer -> {
+            // [추가] 각 고객별 주문 통계 조회
+            long totalOrderCount = orderRepository.countByCustomerId(customer.getId());
+            long totalPurchaseAmount = orderRepository.sumTotalPriceByCustomerId(customer.getId());
+
+            return new GetOneCustomerResponse(
+                    customer.getId(),
+                    customer.getName(),
+                    customer.getEmail(),
+                    customer.getPhone(),
+                    customer.getStatus().getStatusName(),
+                    customer.getCreatedAt(),
+                    customer.getModifiedAt(),
+                    totalOrderCount,     // [추가]
+                    totalPurchaseAmount  // [추가]
+            );
+        });
     }
 
     // 유저 수정
@@ -153,19 +167,14 @@ public class CustomerService {
     public GetOneCustomerResponse updateCustomer(Long id, UpdateCustomerRequest request, UserPrincipal userPrincipal){
 
         // userPrincipal 이 활성화 상태인지 확인
-        // customer 은 customer repository 에서 확인,
         if (userPrincipal.getRole().equals("CUSTOMER")){
             isActiveCustomer(getCustomerById(userPrincipal.getId()));
-        }else if (userPrincipal instanceof AdminUserDetails){
-            // admin 은 admin repository 에서 확인
+        } else if (userPrincipal instanceof AdminUserDetails){
             isActiveAdmin(getAdminById(userPrincipal.getId()));
-        }else{
-            // 둘 다 아니라면 예상치 못한 로그인과정에서의 오류가 발생했다고 가정, before login exception 반환
+        } else {
             throw new ServiceException(ErrorCode.BEFORE_LOGIN);
         }
 
-//        Customer customer = customerRepository.findById(id)
-//                .orElseThrow(() -> new ServiceException(ErrorCode.CUSTOMER_NOT_FOUND));
         Customer customer = getCustomerById(id);
 
         // 이메일 중복 검사
@@ -179,6 +188,10 @@ public class CustomerService {
                 request.getCustomerPhone()
         );
 
+        // [추가] 수정 후 응답에도 통계 포함
+        long totalOrderCount = orderRepository.countByCustomerId(customer.getId());
+        long totalPurchaseAmount = orderRepository.sumTotalPriceByCustomerId(customer.getId());
+
         return new GetOneCustomerResponse(
                 customer.getId(),
                 customer.getName(),
@@ -186,7 +199,9 @@ public class CustomerService {
                 customer.getPhone(),
                 customer.getStatus().getStatusName(),
                 customer.getCreatedAt(),
-                customer.getModifiedAt()
+                customer.getModifiedAt(),
+                totalOrderCount,     // [추가]
+                totalPurchaseAmount  // [추가]
         );
     }
 
@@ -213,7 +228,6 @@ public class CustomerService {
         Customer customer = getCustomerById(id);
 
         customerRepository.delete(customer);
-
     }
 
     //Id 를 기준으로 admin 반환
@@ -224,15 +238,13 @@ public class CustomerService {
     }
 
     // 관리자가 활성상태가 맞는지 확인하는 로직
-    // Admin 상태가 ACTIVE 가 아니라면 THROW
     public void isActiveAdmin(Admin admin){
-        //isLoginable 은 활성(Active) 상태에서만 true 니까 활성상태가 아니라면 throw
         if(!admin.getStatus().isLoginable()){
             switch (admin.getStatus()) {
-                case PENDING -> throw new ServiceException(ErrorCode.ADMIN_PENDING);   // "계정 승인대기 중"
-                case REJECTED -> throw new ServiceException(ErrorCode.ADMIN_REJECTED); // "계정 신청 거부됨"
-                case STOPPED -> throw new ServiceException(ErrorCode.ACCOUNT_STOPPED);   // "계정 정지됨"
-                case INACTIVE -> throw new ServiceException(ErrorCode.ACCOUNT_INACTIVE); // "계정 비활성화됨"
+                case PENDING -> throw new ServiceException(ErrorCode.ADMIN_PENDING);
+                case REJECTED -> throw new ServiceException(ErrorCode.ADMIN_REJECTED);
+                case STOPPED -> throw new ServiceException(ErrorCode.ACCOUNT_STOPPED);
+                case INACTIVE -> throw new ServiceException(ErrorCode.ACCOUNT_INACTIVE);
                 default -> throw new ServiceException(ErrorCode.FORBIDDEN_ADMIN);
             }
         }
@@ -254,5 +266,4 @@ public class CustomerService {
             throw new ServiceException(ErrorCode.ACCOUNT_STOPPED);
         }
     }
-
 }

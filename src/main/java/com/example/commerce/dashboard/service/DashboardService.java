@@ -40,6 +40,10 @@ public class DashboardService {
         // 0. 기준 시간 설정 (오늘 00:00:00)
         LocalDateTime startOfToday = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
 
+        // 💡 [수정 완료] roundedAvg 빨간줄 해결! DB에서 평균값을 가져와서 소수점 1자리로 반올림합니다.
+        Double avgRating = reviewRepository.averageGlobalRating();
+        double roundedAvg = (avgRating != null) ? Math.round(avgRating * 10) / 10.0 : 0.0;
+
         // 1. Summary 데이터 집계
         SummaryDto summary = new SummaryDto(
                 adminRepository.count(),
@@ -47,7 +51,9 @@ public class DashboardService {
                 customerRepository.count(),
                 customerRepository.countByStatus(CustomerStatus.ACTIVE),
                 productRepository.countByStockLessThanEqual(5), // 명세서 조건: 5개 이하
-                orderRepository.countByCreatedAtAfter(startOfToday)
+                orderRepository.countByCreatedAtAfter(startOfToday),
+                reviewRepository.countAllReviews(), // [추가]
+                roundedAvg                          // [추가]
         );
 
         // 2. Widgets 데이터 집계

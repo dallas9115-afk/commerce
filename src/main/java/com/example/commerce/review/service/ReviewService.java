@@ -48,8 +48,8 @@ public class ReviewService {
         if (order.getCustomer().getId()!= customer.getId()){
             throw new ServiceException(ErrorCode.FORBIDDEN_CUSTOMER);
         }
-        // 이미 리뷰를 작성했거나 배달 완료 상태가 아닐때
-        if (order.isReviewed() || order.getOrderStatus()== OrderStatus.DELIVERED){
+        // 이미 리뷰를 작성했거나 배달 완료 상태가 아닐때 ( 수정사항 : == 를 != 로 변경)
+        if (order.isReviewed() || order.getOrderStatus() != OrderStatus.DELIVERED){
             throw new ServiceException(ErrorCode.INVALID_STATUS);
         }
 

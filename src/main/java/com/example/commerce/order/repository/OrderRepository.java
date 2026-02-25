@@ -49,4 +49,10 @@ public interface OrderRepository extends JpaRepository<Order, Long>{
      */
     @Query("SELECT o.orderStatus, COUNT(o) FROM Order o GROUP BY o.orderStatus")
     List<Object[]> countByOrderStatusGroup();
+
+    long countByCustomerId(Long customerId);
+
+    // [추가] 특정 고객의 총 구매 금액 조회 (주문이 없을 경우 0 반환)
+    @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE o.customer.id = :customerId")
+    long sumTotalPriceByCustomerId(@Param("customerId") Long customerId);
 }
