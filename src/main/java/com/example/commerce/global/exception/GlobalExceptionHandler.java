@@ -94,5 +94,22 @@ public class GlobalExceptionHandler {
                 .body(buildErrorResponse(ErrorCode.INVALID_INPUT_VALUE, "입력값의 형식이 올바르지 않거나 필수값이 누락되었습니다.", request.getRequestURI()));
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+            org.springframework.dao.DataIntegrityViolationException e, HttpServletRequest request) {
+
+        log.warn("DataIntegrityViolationException : {}", e.getMessage());
+
+        // "해당 작업을 수행할 수 없는 상태입니다(E017)" 코드를 사용합니다.
+        ErrorCode errorCode = ErrorCode.UNABLE_TO_WORK_STATUS;
+
+        return ResponseEntity
+                .status(errorCode.getStatus())
+                .body(buildErrorResponse(
+                        errorCode,
+                        "주문 내역이 존재하는 상품은 삭제할 수 없습니다. 대신 단종 처리를 이용해 주세요.",
+                        request.getRequestURI()
+                ));
+    }
 
 }
