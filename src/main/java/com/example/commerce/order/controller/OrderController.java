@@ -119,28 +119,26 @@ public class OrderController {
         return CommonResponseHandler.success(SuccessCode.GET_SUCCESSFUL, response);
     }
 
-
-    //주문 취소
+    // 주문 취소
     @PreAuthorize("isAuthenticated()")
-    @PatchMapping("/admins/order/{id}/cancel")
+    @PatchMapping("/admins/orders/{id}/cancel") // [수정] order -> orders (복수형 통일)
     ResponseEntity<CommonResponseDTO<CancelOrderResponse>> getCancel(
             @PathVariable("id") Long orderId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @Valid CancelOrderRequest request) {
+            @Valid @RequestBody CancelOrderRequest request) { // [수정] @RequestBody 추가
 
         CancelOrderResponse response = orderService.cancelByAdmin(orderId, userPrincipal, request);
-
         return CommonResponseHandler.success(SuccessCode.DELETE_SUCCESSFUL, response);
     }
 
     // 주문 완료
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @PatchMapping("/admins/orders/{orderId}/delivered")
+    @PatchMapping("/admins/orders/{id}/delivered") // [수정] {orderId} -> {id} 통일
     ResponseEntity<CommonResponseDTO<String>> deliverCompleted(
-            @PathVariable Long orderId, @AuthenticationPrincipal UserPrincipal userPrincipal
+            @PathVariable("id") Long orderId, // [수정] 매핑 변수에 맞게 @PathVariable("id") 명시
+            @AuthenticationPrincipal UserPrincipal userPrincipal
     ){
         orderService.deliverCompleted(orderId, userPrincipal);
-
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, "배달이 완료되었습니다.");
     }
 }

@@ -23,12 +23,16 @@ public class Product extends BaseEntity {
     private String name; // 상품 이름
 
     @Column(nullable = false, length = 100)
+    @Enumerated(EnumType.STRING) // [참고] Category가 Enum이라면 추가 확인 필요
     private Category category; // 상품 설명
 
     @Column(nullable = false)
     private int price; // 상품 가격
+
     @Column(nullable = false)
     private int stock; // 재고 수량
+
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
     @ManyToOne
@@ -76,15 +80,16 @@ public class Product extends BaseEntity {
             this.stock = stock;
         }
 
-        if (this.stock == 0 && status!=ProductStatus.DISCONTINUED) {
-            updateStatus(ProductStatus.SOLD_OUT);
+        // [수정 완료] 단종(DISCONTINUED) 상태가 아닐 때만 자동 상태 전환 처리
+        if (this.status != ProductStatus.DISCONTINUED) {
+            if (this.stock <= 0) {
+                updateStatus(ProductStatus.SOLD_OUT); // 재고가 0 이하이면 품절
+            } else {
+                updateStatus(ProductStatus.AVAILABLE); // 재고가 1 이상이면 다시 판매중
+            }
         }
-
-//        this.stock = stock;
-//        updateStatus();
     }
 
-    // 변경-> update 함수명 변경 완
     // 상태 변경
     public void updateStatus(ProductStatus productStatus) {
         this.status = productStatus;

@@ -36,11 +36,6 @@ public class ProductService {
     @Transactional
     public CreateProductResponse create(CreateProductRequest request, UserPrincipal userPrincipal){
 
-        //isActiveAdmin(getAdminById(userPrincipal.getId()));
-        //category 유효성 확인
-        //stock,price 유효성 확인
-        //product Status 유효성 확인
-
         Admin admin = getAdminById(userPrincipal.getId());
         isActiveAdmin(admin);
 
@@ -71,8 +66,6 @@ public class ProductService {
 
     // 단건 조회
     public GetOneProductResponse getOne (Long productId) {
-//        Product product = productRepository.findById(productId).orElseThrow(()
-//                -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
         Product product = getProductById(productId);
 
         // 상품 개별 조회 때 리뷰 3개 +
@@ -98,8 +91,9 @@ public class ProductService {
         // 리뷰 개수
         Integer countOfReview = reviewRepository.countByProductId(product.getId());
 
-        // 리뷰 평균
-        double averageOfReview = reviewRepository.averageRating(product.getId());
+        // [수정 완료] 리뷰 평균 (NPE 방지 로직 적용)
+        Double avg = reviewRepository.averageRating(product.getId());
+        double averageOfReview = (avg != null) ? Math.round(avg * 10) / 10.0 : 0.0;
 
         // 별점 별 리뷰 개수
         List<ReviewRating> reviewRatingList = reviewRepository.countListByProductId(product.getId());
@@ -123,31 +117,23 @@ public class ProductService {
 
     // 전체 조회
     public Page<GetProductsResponse> getAll(String keyword, Category category, ProductStatus status, Pageable pageable) {
-        //admin id 로 admin 을 찾고, 활성상태인지 확인
-        //isActiveAdmin(getAdminById(sessionAdminId));
         Page<Product> products = productRepository.searchProducts(keyword, category, status, pageable);
 
-//        List<Product> products = (keyword != null)
-//                ? productRepository.findAllByProductnameOrderByCreatedAtDesc(keyword)
-//                : productRepository.findAllByOrderByCreatedAtDesc();
-
         return products.map(product -> new GetProductsResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getCategory().getCategoryName(),
-                        product.getPrice(),
-                        product.getStock(),
-                        product.getStatus().getStatusName(),
-                        product.getCreatedAt(),
-                        product.getAdmin().getName()
-                ));
+                product.getId(),
+                product.getName(),
+                product.getCategory().getCategoryName(),
+                product.getPrice(),
+                product.getStock(),
+                product.getStatus().getStatusName(),
+                product.getCreatedAt(),
+                product.getAdmin().getName()
+        ));
     }
 
     // 수정
     @Transactional
     public UpdateProductResponse update(Long productId, UpdateProductRequest request , UserPrincipal userPrincipal){
-//        Product product = productRepository.findById(productId).orElseThrow(()
-//                -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
         isActiveAdmin(getAdminById(userPrincipal.getId()));
         Product product = getProductById(productId);
 
@@ -190,8 +176,6 @@ public class ProductService {
     @Transactional
     public void delete(Long productId, UserPrincipal userPrincipal) {
         isActiveAdmin(getAdminById(userPrincipal.getId()));
-//        Product product = productRepository.findById(productId).orElseThrow(()
-//                -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
         Product product = getProductById(productId);
 
         productRepository.delete(product);
@@ -199,8 +183,6 @@ public class ProductService {
 
     @Transactional
     public void discontinue(Long productId, UserPrincipal userPrincipal) {
-//        Product product = productRepository.findById(productId).orElseThrow(()
-//                -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
         isActiveAdmin(getAdminById(userPrincipal.getId()));
 
         Product product = getProductById(productId);
@@ -236,6 +218,4 @@ public class ProductService {
             }
         }
     }
-
-
 }

@@ -96,14 +96,13 @@ public class ProductController {
     }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OP_ADMIN', 'CS_ADMIN')")
-    @PatchMapping("/products/{proudctId}")
+    @PatchMapping("/products/{productId}") // [수정] 오타 교정 (proudctId -> productId)
     public ResponseEntity<CommonResponseDTO<UpdateStockResponse>> restockProduct(
-            @PathVariable Long productId,
+            @PathVariable("productId") Long productId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @Valid UpdateStockRequest request){
-        UpdateStockResponse response = productService.restock(productId, request, userPrincipal);
+            @Valid @RequestBody UpdateStockRequest request){ // [수정] @RequestBody 추가!
 
+        UpdateStockResponse response = productService.restock(productId, request, userPrincipal);
         return CommonResponseHandler.success(SuccessCode.DATA_UPDATED, response);
     }
-
 }

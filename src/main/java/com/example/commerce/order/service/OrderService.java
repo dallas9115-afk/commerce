@@ -1,6 +1,5 @@
 package com.example.commerce.order.service;
 
-
 import com.example.commerce.admin.entity.Admin;
 import com.example.commerce.admin.repository.AdminRepository;
 import com.example.commerce.customer.entity.Customer;
@@ -23,6 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 주문 관련 비즈니스 로직을 처리하는 서비스 클래스입니다.
+ * Javadoc 연습용: 고객의 주문 생성, 관리자의 대리 주문, 주문 취소 및 상태 관리를 담당합니다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,7 +34,6 @@ public class OrderService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final AdminRepository adminRepository;
-
 
     // 주문 생성
     @Transactional
@@ -43,9 +45,6 @@ public class OrderService {
 
         // 상품이 정말로 존재하는지 (없으면 오류 반환)
         Product product = getProductById(request.getProductId());
-
-//        Product product = productRepository.findById(request.getProductId())
-//                .orElseThrow(() -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 상품 상태가 판매중이지 확인
         productStatusIsValid(product.getId());
@@ -91,19 +90,12 @@ public class OrderService {
 
         // 상품이 정말로 존재하는지
         Product product = getProductById(request.getProductId());
-//        Product product = productRepository.findById(request.getProductId())
-//                .orElseThrow(() -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
 
         // 상품 상태가 판매중이지 확인
         productStatusIsValid(product.getId());
 
         // 재고가 남아있는지 확인
         product.chkStock(request.getQuantity());
-
-//        // 재고가 남아있는지 확인
-//        if (request.getQuantity() > product.getStock()) {
-//            throw new ServiceException(ErrorCode.SHORT_STOCK);
-//        }
 
         Order order = new Order(
                 request.getQuantity(),
@@ -143,8 +135,6 @@ public class OrderService {
         isActiveAdmin(getAdminById(userPrincipal.getId()));
 
         Page<Order> orders = orderRepository.searchOrders(keyword, orderStatus, null, pageable);
-        //List<GetAllAdminOrderResponse> dtos = new ArrayList<>();
-        // -1 을 조회할 수 없게 예외 처리
 
         return orders.map(order -> new GetOrdersByAdminResponse(
                 order.getId(),
@@ -154,24 +144,8 @@ public class OrderService {
                 order.getOrderStatus().getStatusName(),
                 order.getQuantity(),
                 order.getCreatedAt(),
-                order.getAdmin().getName()
+                order.getAdmin() != null ? order.getAdmin().getName() : "N/A"
         ));
-
-//        for (Order order : orders) {
-//            GetAllAdminOrderResponse dto = new GetAllAdminOrderResponse(
-//                    order.getId(),
-//                    order.getOrderNo(),
-//                    order.getCustomer().getName(),
-//                    order.getProduct().getName(),
-//                    order.getTotalPrice(),
-//                    order.getOrderStatus().getStatusName(),
-//                    order.getQuantity(),
-//                    order.getCreatedAt(),
-//                    order.getAdmin().getName()
-//            );
-//            dtos.add(dto);
-//        }
-//        return new PageImpl<>(dtos, pageable, orders.getTotalElements());
     }
 
     public Page<GetOrdersResponse> getAllByCustomer(UserPrincipal userPrincipal, String keyword, OrderStatus orderStatus, Pageable pageable){
@@ -192,7 +166,6 @@ public class OrderService {
         ));
     }
 
-
     // 주문 단 건 조회 (관리자용)
     public GetOneOrderByAdminResponse getOneAdminOrder(Long orderId, UserPrincipal userPrincipal) {
 
@@ -201,9 +174,6 @@ public class OrderService {
 
         // 조회하고자 하는 주문이 정말로 존재하는지 (없으면 오류 반환)
         Order order = getOrderById(orderId);
-
-
-        //Order newOrder = orderRepository.save(order);
 
         return new GetOneOrderByAdminResponse(
                 order.getOrderNo(),
@@ -214,9 +184,9 @@ public class OrderService {
                 order.getProduct().getName(),
                 order.getProduct().getPrice(),
                 order.getCreatedAt(),
-                order.getAdmin().getName(),
-                order.getAdmin().getEmail(),
-                order.getAdmin().getRole()
+                order.getAdmin() != null ? order.getAdmin().getName() : "N/A",
+                order.getAdmin() != null ? order.getAdmin().getEmail() : "N/A",
+                order.getAdmin() != null ? order.getAdmin().getRole() : null
         );
     }
 
@@ -226,16 +196,9 @@ public class OrderService {
         Order order = getOrderById(orderId);
 
         // 본인의 주문을 조회하려는게 맞는지 확인
-        if (order.getCustomer().getId()!=userPrincipal.getId()){
+        if (!order.getCustomer().getId().equals(userPrincipal.getId())){
             throw new ServiceException(ErrorCode.FORBIDDEN_CUSTOMER);
         }
-
-        // 고객 로그인 체크
-//        if (sessionCustomerId == null) {
-//            throw new ServiceException(ErrorCode.CUSTOMER_MISMATCH);
-//        }
-
-        // Order newOrder = orderRepository.save(order);
 
         return new GetOneOrderResponse(
                 order.getOrderNo(),
@@ -249,34 +212,37 @@ public class OrderService {
         );
     }
 
-
-    // 주문 취소 (관리자)
+    /**
+     * 주문 취소 로직 (관리자 및 고객 공용)
+     * 팀원 리뷰 반영: 고객은 본인의 주문만 취소 가능하도록 보안 로직 강화
+     */
     @Transactional
     public CancelOrderResponse cancelByAdmin(Long orderId, UserPrincipal userPrincipal, CancelOrderRequest request) {
 
-        // 관리자 활성 상태 확인
-        //isActiveAdmin(getAdminById(userPrincipal.getId()));
-
-        // userPrincipal 이 활성화 상태인지 확인
-        // customer 은 customer repository 에서 확인,
+        // 1. 요청자(관리자 또는 고객)의 활성 상태 확인
         if (userPrincipal.getRole().equals("CUSTOMER")){
             isActiveCustomer(getCustomerById(userPrincipal.getId()));
-        }else if (userPrincipal instanceof AdminUserDetails){
-            // admin 은 admin repository 에서 확인
+        } else if (userPrincipal instanceof AdminUserDetails){
             isActiveAdmin(getAdminById(userPrincipal.getId()));
-        }else{
-            // 둘 다 아니라면 예상치 못한 로그인과정에서의 오류가 발생했다고 가정, before login exception 반환
+        } else {
             throw new ServiceException(ErrorCode.BEFORE_LOGIN);
         }
 
-        // 주문 확인
+        // 2. 취소 대상 주문 확인
         Order order = getOrderById(orderId);
 
-        // 재고 다시 수량 올리기
-        Product product = order.getProduct();
-        product.updateStock(product.getStock()+order.getQuantity()); // restoreStock 변경 필요
+        // 3. [보안 핵심] 요청자가 '고객'일 경우에만 본인 주문인지 검증 (IDOR 방어)
+        if (userPrincipal.getRole().equals("CUSTOMER")) {
+            if (!order.getCustomer().getId().equals(userPrincipal.getId())) {
+                throw new ServiceException(ErrorCode.FORBIDDEN_CUSTOMER); // "본인 주문만 접근 가능" 에러
+            }
+        }
 
-        // 상태 변경 + 취소 사유 저장
+        // 4. 재고 복구 및 상태 변경
+        Product product = order.getProduct();
+        product.updateStock(product.getStock() + order.getQuantity());
+
+        // 5. 엔티티 내부 cancel 메서드 호출 (Dirty Checking)
         order.cancel(request.getCancelReason());
 
         return new CancelOrderResponse(
@@ -287,12 +253,13 @@ public class OrderService {
         );
     }
 
+    /**
+     * 주문 완료 처리 (배달 완료)
+     */
     @Transactional
     public void deliverCompleted(Long orderId, UserPrincipal userPrincipal){
         isActiveAdmin(getAdminById(userPrincipal.getId()));
-
         Order order = getOrderById(orderId);
-
         order.updateStatus(OrderStatus.DELIVERED);
     }
 
@@ -320,8 +287,6 @@ public class OrderService {
         }
     }
 
-
-
     public Product getProductById(Long productId){
         return  productRepository.findById(productId).orElseThrow(
                 () -> new ServiceException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -346,10 +311,10 @@ public class OrderService {
 
     //Customer 상태가 ACTIVE 가 아니라면 throw
     public void isActiveCustomer(Customer customer){
-        if (customer.getStatus()== CustomerStatus.INACTIVE){
+        if (customer.getStatus() == CustomerStatus.INACTIVE){
             throw new ServiceException(ErrorCode.ACCOUNT_INACTIVE);
         }
-        else if (customer.getStatus()==CustomerStatus.SUSPENDED){
+        else if (customer.getStatus() == CustomerStatus.SUSPENDED){
             throw new ServiceException(ErrorCode.ACCOUNT_STOPPED);
         }
     }
