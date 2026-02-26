@@ -29,10 +29,23 @@ Commerce 프로젝트는 고객(Customer), 상품(Product), 주문(Order), 리�
 대신 Wireframe을 통해 각 기능의 화면 흐름과 동작 방식을 확인할 수 있습니다.
 
 ### :hatched_chick: API 명세서
+https://gkdmsdl100414-7551268.postman.co/documentation/52679689-3159e182-744a-4934-bb44-eaf7451a1090/publish?workspaceId=c2d7b5b7-f8e5-4e37-8381-68913c9c2a22&authFlowId=5b84527f-8699-4047-abf5-3805395d70ad
 
 ### :hatched_chick: ERD
+<img width="1419" height="787" alt="image" src="https://github.com/user-attachments/assets/f777ba0e-2aca-4a91-8119-fa0cf86e742f" />
+
 
 ### :hatched_chick: 트러블슈팅
+
+https://kjw81024.tistory.com/53  
+
+https://kjw81024.tistory.com/54  
+
+https://kjw81024.tistory.com/55  
+
+https://velog.io/@flanker07/%ED%8C%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8%EB%B0%[…]B5%AC%ED%98%84-%ED%8A%B8%EB%9F%AC%EB%B8%94%EC%8A%88%ED%8C%85-TIL
+
+https://velog.io/@flanker07/JWT-%EA%B4%80%EB%A0%A8-TIL-%EB%AC%B4%EC%83%81%ED%83%9[…]EB%AC%B4%EC%83%81%ED%83%9C-%EC%95%84%EB%8B%8C-%EB%8B%B9%EC%8B%A0
 
 ### :hatched_chick: 마일스톤
 
@@ -45,8 +58,11 @@ Commerce 프로젝트는 고객(Customer), 상품(Product), 주문(Order), 리�
 | Day 5 | 문서 완성               | API 명세서 최종 작성, README 작성, PPT, 시연영상          |
 | Day 6 | 발표 정리               | 발표 마지막 정리 준비           |
 
-### :hatched_chick: WireFrame 화면
-{영상}
+### :hatched_chick: wireFrame, postman 시연화면
+
+ppt에서 확인할 수 있습니다.
+
+https://www.canva.com/design/DAHCMv3Qq9g/rgIllSpzyV532KCSq_NR_Q/edit?utm_content=DAHCMv3Qq9g&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
 
 -----
 
